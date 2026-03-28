@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -29,28 +28,6 @@
 
 html{scroll-behavior:smooth;overflow-x:hidden}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-dark);overflow-x:hidden;cursor:default}
-
-/* ── CURSOR ── */
-.cursor{
-  position:fixed;width:10px;height:10px;
-  background:var(--orange);border-radius:50%;
-  pointer-events:none;z-index:9999;
-  transition:transform .15s ease,opacity .3s;
-  transform:translate(-50%,-50%);
-  mix-blend-mode:normal;
-}
-.cursor-ring{
-  position:fixed;width:36px;height:36px;
-  border:1.5px solid rgba(230,126,34,0.4);
-  border-radius:50%;pointer-events:none;z-index:9998;
-  transform:translate(-50%,-50%);
-  transition:width .25s,height .25s,border-color .25s;
-}
-body:has(a:hover) .cursor-ring,
-body:has(button:hover) .cursor-ring{
-  width:52px;height:52px;
-  border-color:rgba(230,126,34,0.8);
-}
 
 /* ── NAV ── */
 nav{
@@ -405,9 +382,6 @@ footer{
 </head>
 <body>
 
-<div class="cursor" id="cur"></div>
-<div class="cursor-ring" id="curR"></div>
-
 <nav id="nav">
   <a href="#" class="logo">
     <div class="logo-mark"><i class="fas fa-scroll"></i></div>
@@ -495,7 +469,7 @@ footer{
       <i class="fas fa-file-archive"></i> Tải Lisu.zip (full source + server)
     </button>
     <div class="version-info">
-      <span><i class="fas fa-tag"></i> Phiên bản: 2.0.0 (2025)</span>
+      <span><i class="fas fa-tag"></i> Phiên bản: 2.0.0 (2026)</span>
       <span><i class="fas fa-database"></i> Dung lượng: ~38 MB</span>
       <span><i class="fab fa-python"></i> Yêu cầu: Python 3.9+</span>
     </div>
@@ -549,7 +523,7 @@ footer{
 
 <footer>
   <div class="footer-inner">
-    <div class="footer-copyright"><i class="far fa-copyright"></i> 2025 Lisu AI — Hoàng Minh Tuấn</div>
+    <div class="footer-copyright"><i class="far fa-copyright"></i> 2026 Lisu AI — Hoàng Minh Tuấn</div>
     <div class="footer-links">
       <a href="#"><i class="fab fa-github"></i> GitHub</a>
       <a href="#"><i class="fas fa-book-open"></i> Hướng dẫn chi tiết</a>
@@ -576,22 +550,6 @@ footer{
       triggerDownloadZip();
     });
   });
-
-  // CURSOR
-  const cur = document.getElementById('cur');
-  const curR = document.getElementById('curR');
-  let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove', e => {
-    mx=e.clientX; my=e.clientY;
-    cur.style.left=mx+'px'; cur.style.top=my+'px';
-  });
-  function animateCursor(){
-    rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
-    curR.style.left=rx+'px'; curR.style.top=ry+'px';
-    requestAnimationFrame(animateCursor);
-  }
-  animateCursor();
-  if('ontouchstart' in window){ cur.style.display='none'; curR.style.display='none'; }
 
   // SCROLL REVEAL
   const obs = new IntersectionObserver((entries) => {
