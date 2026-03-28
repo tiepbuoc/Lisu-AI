@@ -1,0 +1,611 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lisu AI — Tác nhân AI hỗ trợ nghiên cứu lịch sử</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;1,9..144,300;1,9..144,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;
+  --card-bg:#fffaf5;
+  --ink:#2c3e2f;
+  --ink2:#fef5e8;
+  --ink3:#fff0e0;
+  --orange:#e67e22;
+  --orange2:#d35400;
+  --orange-glow:rgba(230,126,34,0.15);
+  --orange-pale:rgba(230,126,34,0.06);
+  --gold:#f39c12;
+  --border:#ffe0b5;
+  --text-dark:#2c3e50;
+  --text-mid:#7f8c8d;
+  --text-dim:#95a5a6;
+}
+
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-dark);overflow-x:hidden;cursor:default}
+
+/* ── CURSOR ── */
+.cursor{
+  position:fixed;width:10px;height:10px;
+  background:var(--orange);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transition:transform .15s ease,opacity .3s;
+  transform:translate(-50%,-50%);
+  mix-blend-mode:normal;
+}
+.cursor-ring{
+  position:fixed;width:36px;height:36px;
+  border:1.5px solid rgba(230,126,34,0.4);
+  border-radius:50%;pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:width .25s,height .25s,border-color .25s;
+}
+body:has(a:hover) .cursor-ring,
+body:has(button:hover) .cursor-ring{
+  width:52px;height:52px;
+  border-color:rgba(230,126,34,0.8);
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 6%;height:72px;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  transition:all .3s;
+  box-shadow:0 2px 12px rgba(0,0,0,0.02);
+}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-mark{
+  width:38px;height:38px;
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  box-shadow:0 0 20px rgba(230,126,34,0.2);
+  color:white;
+}
+.logo-type{
+  font-family:'Fraunces',serif;
+  font-size:22px;font-weight:700;
+  color:var(--text-dark);letter-spacing:-0.5px;
+}
+.logo-type em{font-style:italic;color:var(--orange);font-weight:300}
+.nav-right{display:flex;align-items:center;gap:36px}
+.nav-link{
+  font-size:13px;font-weight:500;
+  color:var(--text-mid);
+  text-decoration:none;
+  transition:color .2s;
+}
+.nav-link:hover{color:var(--orange)}
+.nav-btn{
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:30px;
+  padding:9px 22px;
+  font-size:13px;font-weight:500;
+  color:var(--orange);cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  transition:all .25s;
+}
+.nav-btn:hover{
+  background:var(--orange);color:white;
+  border-color:var(--orange);
+  box-shadow:0 0 20px rgba(230,126,34,0.2);
+}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:100px 6% 80px;
+  position:relative;z-index:2;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid var(--border);
+  border-radius:30px;
+  padding:8px 20px;
+  font-size:12px;font-weight:500;
+  color:var(--orange);
+  letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:40px;
+  background:var(--orange-pale);
+  opacity:0;
+  animation:riseUp .8s ease .1s forwards;
+}
+.eyebrow-dot{
+  width:6px;height:6px;background:var(--orange);border-radius:50%;
+  box-shadow:0 0 8px var(--orange);animation:dotPulse 2s infinite
+}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 8px var(--orange)}50%{box-shadow:0 0 20px var(--orange)}}
+.hero-h1{
+  font-family:'Fraunces',serif;
+  font-size:clamp(48px,7vw,86px);
+  font-weight:300;
+  line-height:1.05;
+  letter-spacing:-2px;
+  margin-bottom:28px;
+  max-width:900px;
+  opacity:0;
+  animation:riseUp .9s ease .25s forwards;
+  color:var(--text-dark);
+}
+.hero-h1 .italic{font-style:italic;font-weight:300;color:var(--orange);display:block}
+.hero-h1 .line2{
+  display:block;
+  background:linear-gradient(90deg,var(--text-dark) 0%,var(--orange) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.desktop-sub{
+  font-size:16px;font-weight:400;
+  color:var(--text-mid);
+  margin:0 auto 52px;
+  opacity:0;
+  animation:riseUp .9s ease .4s forwards;
+  max-width:560px;
+}
+.hero-actions{
+  display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+  opacity:0;
+  animation:riseUp .9s ease .55s forwards;
+}
+.btn-main{
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  color:white;
+  padding:16px 38px;border-radius:50px;
+  font-size:15px;font-weight:600;
+  border:none;cursor:pointer;
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:'DM Sans',sans-serif;
+  box-shadow:0 4px 20px rgba(230,126,34,0.3);
+  transition:all .3s;
+}
+.btn-main:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(230,126,34,0.4);}
+.btn-ghost{
+  background:transparent;color:var(--text-mid);
+  padding:16px 32px;border-radius:50px;
+  font-size:15px;font-weight:400;
+  border:1px solid var(--border);cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:all .25s;
+}
+.btn-ghost:hover{color:var(--orange);border-color:var(--orange);}
+.scroll-hint{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  opacity:0;animation:riseUp .9s ease 1.2s forwards;
+}
+.scroll-line{width:1px;height:48px;background:linear-gradient(to bottom,var(--orange),transparent);animation:scrollDrop 2s ease-in-out infinite}
+@keyframes scrollDrop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ── FEATURES ── */
+.features{padding:100px 6%;position:relative;z-index:2}
+.section-label{
+  font-size:11px;font-weight:500;
+  color:var(--orange);
+  letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent);max-width:80px}
+.feat-layout{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px;
+  max-width:1300px;margin:0 auto;
+}
+.feat-card{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:28px;
+  padding:36px 28px;
+  transition:all .3s;
+}
+.feat-card:hover{transform:translateY(-5px);border-color:var(--orange);box-shadow:0 12px 28px rgba(0,0,0,0.05);}
+.feat-icon{
+  width:52px;height:52px;
+  background:var(--orange-pale);
+  border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin-bottom:24px;
+  color:var(--orange);
+}
+.feat-h3{
+  font-family:'Fraunces',serif;
+  font-size:24px;font-weight:400;
+  margin-bottom:12px;
+  letter-spacing:-0.3px;
+}
+.feat-p{font-size:14px;font-weight:400;color:var(--text-mid);line-height:1.7}
+
+/* ── DOWNLOAD SECTION ── */
+.download-section{
+  padding:0 6% 100px;
+  position:relative;z-index:2;
+}
+.download-card{
+  background:linear-gradient(135deg,var(--card-bg) 0%,#fff5e8 100%);
+  border:1px solid var(--border);
+  border-radius:48px;
+  padding:60px 48px;
+  text-align:center;
+  max-width:1000px;
+  margin:0 auto;
+  position:relative;
+}
+.download-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--orange-pale);
+  border:1px solid var(--border);
+  border-radius:60px;
+  padding:8px 20px;
+  font-size:12px;font-weight:500;
+  color:var(--orange);
+  margin-bottom:32px;
+}
+.download-h2{
+  font-family:'Fraunces',serif;
+  font-size:clamp(36px,5vw,56px);
+  font-weight:300;
+  line-height:1.1;
+  margin-bottom:20px;
+  color:var(--text-dark);
+}
+.download-h2 em{font-style:italic;color:var(--orange)}
+.download-desc{
+  font-size:16px;font-weight:400;
+  color:var(--text-mid);
+  max-width:500px;
+  margin:0 auto 36px;
+}
+.zip-btn{
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  color:white;
+  padding:18px 44px;
+  border-radius:60px;
+  font-size:17px;font-weight:600;
+  border:none;cursor:pointer;
+  display:inline-flex;align-items:center;gap:12px;
+  margin-bottom:28px;
+  transition:all .3s;
+  box-shadow:0 4px 16px rgba(230,126,34,0.25);
+}
+.zip-btn:hover{transform:scale(1.02);box-shadow:0 8px 30px rgba(230,126,34,0.4);}
+.version-info{
+  font-size:13px;color:var(--text-dim);
+  display:flex;align-items:center;justify-content:center;gap:24px;
+  flex-wrap:wrap;
+}
+
+/* ── HOW IT WORKS ── */
+.how-section{
+  padding:0 6% 100px;
+  position:relative;z-index:2;
+}
+.steps-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+  max-width:1200px;
+  margin:40px auto 0;
+}
+.step-item{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:28px 20px;
+  text-align:center;
+}
+.step-num{
+  width:44px;height:44px;
+  background:linear-gradient(135deg,var(--orange2),var(--orange));
+  color:white;
+  font-weight:700;
+  font-size:20px;
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+}
+.step-title{
+  font-family:'Fraunces',serif;
+  font-size:18px;font-weight:500;
+  margin-bottom:10px;
+}
+.step-desc{font-size:13px;color:var(--text-mid);line-height:1.6}
+
+/* ── AUTHOR ── */
+.author-section{
+  padding:0 6% 100px;
+}
+.author-card{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:32px;
+  padding:40px;
+  max-width:800px;
+  margin:0 auto;
+  text-align:center;
+}
+.author-name{
+  font-family:'Fraunces',serif;
+  font-size:28px;font-weight:400;
+  margin-bottom:8px;
+  color:var(--text-dark);
+}
+.author-title{font-size:13px;color:var(--orange);letter-spacing:1px;margin-bottom:20px}
+.author-contact{
+  display:flex;justify-content:center;gap:32px;flex-wrap:wrap;
+  margin:24px 0 20px;
+}
+.contact-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:14px;color:var(--text-mid);
+  text-decoration:none;
+  transition:color .2s;
+}
+.contact-item:hover{color:var(--orange)}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--border);
+  padding:48px 6% 32px;
+  position:relative;z-index:2;
+  background:white;
+}
+.footer-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;
+  gap:20px;
+}
+.footer-links{display:flex;gap:32px;flex-wrap:wrap}
+.footer-links a{color:var(--text-dim);text-decoration:none;font-size:13px}
+.footer-links a:hover{color:var(--orange)}
+.footer-copyright{font-size:12px;color:var(--text-dim)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .feat-layout{grid-template-columns:1fr}
+  .steps-grid{grid-template-columns:repeat(2,1fr)}
+  .download-card{padding:40px 24px}
+  .nav-right .nav-link{display:none}
+  .desktop-sub{display:none}
+}
+@media(max-width:600px){
+  .steps-grid{grid-template-columns:1fr}
+  .hero-h1{font-size:44px}
+  .author-contact{gap:16px;flex-direction:column;align-items:center}
+  .footer-inner{flex-direction:column;text-align:center}
+  .hero{padding-top:80px}
+}
+
+/* animation */
+@keyframes riseUp{
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.rise{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.rise.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="curR"></div>
+
+<nav id="nav">
+  <a href="#" class="logo">
+    <div class="logo-mark"><i class="fas fa-scroll"></i></div>
+    <div class="logo-type">Lisu<em>AI</em></div>
+  </a>
+  <div class="nav-right">
+    <a href="#features" class="nav-link"><i class="fas fa-cogs"></i> Tính năng</a>
+    <a href="#how" class="nav-link"><i class="fas fa-rocket"></i> Cách dùng</a>
+    <a href="#author" class="nav-link"><i class="fas fa-user"></i> Tác giả</a>
+    <button class="nav-btn" id="downloadNavBtn"><i class="fas fa-download"></i> Tải Lisu.zip</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">
+    <div class="eyebrow-dot"></div>
+    <i class="fas fa-robot"></i> TÁC NHÂN AI · NGHIÊN CỨU LỊCH SỬ
+  </div>
+  <h1 class="hero-h1">
+    <span class="italic">Lisu AI ~ Tác nhân AI hỗ trợ</span>
+    <span class="line2"><br>nghiên cứu và tìm hiểu lịch sử</span>
+  </h1>
+  <div class="desktop-sub">
+    <i class="fas fa-microphone-alt"></i> Điều khiển máy tính bằng giọng nói · Tự động hóa thông minh · RAG & ghi nhớ dài hạn
+  </div>
+  <div class="hero-actions">
+    <button class="btn-main" id="downloadHeroBtn">
+      <i class="fas fa-download"></i> Tải Lisu.zip
+    </button>
+    <a href="#how" class="btn-ghost">
+      <i class="fas fa-play-circle"></i> Xem hướng dẫn <span>↓</span>
+    </a>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="section-label rise"><i class="fas fa-star"></i> Tính năng nổi bật</div>
+  <div class="feat-layout">
+    <div class="feat-card rise">
+      <div class="feat-icon"><i class="fas fa-microphone-alt"></i></div>
+      <h3 class="feat-h3">Điều khiển bằng giọng nói</h3>
+      <p class="feat-p">Nói tự nhiên bằng tiếng Việt — Lisu hiểu, phân tích và thực hiện hành động trên máy tính của bạn.</p>
+    </div>
+    <div class="feat-card rise">
+      <div class="feat-icon"><i class="fas fa-eye"></i></div>
+      <h3 class="feat-h3">AI nhìn màn hình (Vision)</h3>
+      <p class="feat-p">GPT-4o mini nhận diện giao diện, từ đó ra quyết định click, gõ văn bản, mở ứng dụng chính xác.</p>
+    </div>
+    <div class="feat-card rise">
+      <div class="feat-icon"><i class="fas fa-brain"></i></div>
+      <h3 class="feat-h3">RAG & Ghi nhớ thông minh</h3>
+      <p class="feat-p">Bộ nhớ dài hạn + ngắn hạn, truy xuất kiến thức bằng vector embedding. AI nhớ những gì bạn đã dạy.</p>
+    </div>
+    <div class="feat-card rise">
+      <div class="feat-icon"><i class="fas fa-pen-fancy"></i></div>
+      <h3 class="feat-h3">AI Write & Soạn thảo</h3>
+      <p class="feat-p">Viết email, báo cáo, văn bản chuyên nghiệp với Gemini + RAG từ kiến thức soạn thảo riêng.</p>
+    </div>
+    <div class="feat-card rise">
+      <div class="feat-icon"><i class="fas fa-mobile-alt"></i></div>
+      <h3 class="feat-h3">Điều khiển từ xa</h3>
+      <p class="feat-p">Dùng điện thoại truy cập giao diện remote, ra lệnh từ xa — Lisu thực thi trên máy tính chính.</p>
+    </div>
+    <div class="feat-card rise">
+      <div class="feat-icon"><i class="fas fa-history"></i></div>
+      <h3 class="feat-h3">Quy trình 3 bước chuyên sâu</h3>
+      <p class="feat-p">GPT-4o mini nhìn màn hình → Groq lên kế hoạch → Groq tạo macro & thực thi. Tự động hoá mượt mà.</p>
+    </div>
+  </div>
+</section>
+
+<section class="download-section" id="download">
+  <div class="download-card rise">
+    <div class="download-badge">
+      <i class="fas fa-code-branch"></i> Hoàn toàn miễn phí · Mã nguồn mở
+    </div>
+    <h2 class="download-h2">
+      Tải ngay <em>Lisu.zip</em><br>
+      và làm chủ máy tính
+    </h2>
+    <p class="download-desc">
+      <i class="fas fa-windows"></i> Hỗ trợ Windows 10/11 · Cài đặt nhanh trong 2 phút · Không cần internet (tùy chọn local LLM)
+    </p>
+    <button class="zip-btn" id="downloadZipBtn">
+      <i class="fas fa-file-archive"></i> Tải Lisu.zip (full source + server)
+    </button>
+    <div class="version-info">
+      <span><i class="fas fa-tag"></i> Phiên bản: 2.0.0 (2025)</span>
+      <span><i class="fas fa-database"></i> Dung lượng: ~38 MB</span>
+      <span><i class="fab fa-python"></i> Yêu cầu: Python 3.9+</span>
+    </div>
+  </div>
+</section>
+
+<section class="how-section" id="how">
+  <div class="section-label rise"><i class="fas fa-compass"></i> Cài đặt & sử dụng trong 3 bước</div>
+  <div class="steps-grid">
+    <div class="step-item rise">
+      <div class="step-num">1</div>
+      <div class="step-title"><i class="fas fa-download"></i> Tải Lisu.zip</div>
+      <div class="step-desc">Nhấn nút tải bên trên, giải nén vào thư mục bất kỳ.</div>
+    </div>
+    <div class="step-item rise">
+      <div class="step-num">2</div>
+      <div class="step-title"><i class="fas fa-terminal"></i> Cài thư viện</div>
+      <div class="step-desc">Chạy file <code style="background:var(--orange-pale);padding:2px 8px;border-radius:12px;color:var(--orange);">run.bat</code> hoặc <code>pip install -r requirements.txt</code>.</div>
+    </div>
+    <div class="step-item rise">
+      <div class="step-num">3</div>
+      <div class="step-title"><i class="fas fa-play"></i> Khởi động & trải nghiệm</div>
+      <div class="step-desc">Chạy <code>run.bat</code> → mở trình duyệt tại <code>http://localhost:8000</code> → bắt đầu ra lệnh.</div>
+    </div>
+    <div class="step-item rise">
+      <div class="step-num"><i class="fas fa-lightbulb"></i></div>
+      <div class="step-title">Mẹo nhanh</div>
+      <div class="step-desc">Nhấn <kbd style="background:var(--orange-pale);padding:2px 6px;border-radius:8px;">F6</kbd> để dừng khẩn cấp. Điều khiển từ xa qua <code>http://[IP]:8000/remote.html</code></div>
+    </div>
+  </div>
+</section>
+
+<section class="author-section" id="author">
+  <div class="author-card rise">
+    <div class="author-name"><i class="fas fa-user-astronaut"></i> Hoàng Minh Tuấn</div>
+    <div class="author-title">Tác giả & Kiến trúc sư của Lisu AI</div>
+    <p style="font-size:14px;color:var(--text-mid);max-width:500px;margin:0 auto 24px">
+      Xây dựng Lisu với sứ mệnh đưa trí tuệ nhân tạo đến gần hơn với nghiên cứu lịch sử, tự động hoá thông minh và trải nghiệm điều khiển máy tính bằng ngôn ngữ tự nhiên.
+    </p>
+    <div class="author-contact">
+      <a href="tel:0796545052" class="contact-item"><i class="fas fa-phone-alt"></i> 0796 545 052</a>
+      <a href="mailto:hoangminhtuan09032009@gmail.com" class="contact-item"><i class="fas fa-envelope"></i> hoangminhtuan09032009@gmail.com</a>
+    </div>
+    <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <span style="background:var(--orange-pale);padding:4px 12px;border-radius:30px;font-size:12px;"><i class="fab fa-python"></i> Python · WebSocket</span>
+      <span style="background:var(--orange-pale);padding:4px 12px;border-radius:30px;font-size:12px;"><i class="fas fa-robot"></i> GPT-4o · Groq · Gemini</span>
+      <span style="background:var(--orange-pale);padding:4px 12px;border-radius:30px;font-size:12px;"><i class="fas fa-brain"></i> RAG + Embeddings</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-copyright"><i class="far fa-copyright"></i> 2025 Lisu AI — Hoàng Minh Tuấn</div>
+    <div class="footer-links">
+      <a href="#"><i class="fab fa-github"></i> GitHub</a>
+      <a href="#"><i class="fas fa-book-open"></i> Hướng dẫn chi tiết</a>
+      <a href="#"><i class="fas fa-balance-scale"></i> MIT License</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function triggerDownloadZip() {
+    const link = document.createElement('a');
+    link.href = 'lisu.zip';
+    link.download = 'lisu.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  const downloadBtns = ['downloadNavBtn', 'downloadHeroBtn', 'downloadZipBtn'];
+  downloadBtns.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      triggerDownloadZip();
+    });
+  });
+
+  // CURSOR
+  const cur = document.getElementById('cur');
+  const curR = document.getElementById('curR');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => {
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=mx+'px'; cur.style.top=my+'px';
+  });
+  function animateCursor(){
+    rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+    curR.style.left=rx+'px'; curR.style.top=ry+'px';
+    requestAnimationFrame(animateCursor);
+  }
+  animateCursor();
+  if('ontouchstart' in window){ cur.style.display='none'; curR.style.display='none'; }
+
+  // SCROLL REVEAL
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e,i) => {
+      if (e.isIntersecting) setTimeout(() => e.target.classList.add('in'), i * 80);
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+  document.querySelectorAll('.rise').forEach(el => obs.observe(el));
+
+  // NAV SCROLL BG
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('nav');
+    if (nav) nav.style.background = window.scrollY > 40 ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.92)';
+  });
+</script>
+</body>
+</html>
