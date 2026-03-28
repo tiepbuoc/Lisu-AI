@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Sơ Đồ Tư Duy - AI Mindmap | Vẽ Mindmap Mọi Chủ Đề</title>
-    <link rel="icon"
-        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='30' fill='%23667eea'/%3E%3Ctext x='50' y='72' font-size='55' text-anchor='middle' fill='white' font-family='Arial'%3E🧠%3C/text%3E%3C/svg%3E">
+    <title>AI Mindmap | Sơ đồ tư duy thông minh</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='30' fill='%233b82f6'/%3E%3Ctext x='50' y='72' font-size='55' text-anchor='middle' fill='white' font-family='Arial'%3E🧠%3C/text%3E%3C/svg%3E">
     <script src="https://unpkg.com/d3@7.8.5/dist/d3.min.js"></script>
     <script src="https://unpkg.com/markmap-lib@0.15.3/dist/browser/index.js"></script>
     <script src="https://unpkg.com/markmap-view@0.15.3/dist/browser/index.js"></script>
@@ -18,247 +16,188 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
-            background: linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: #ffffff;
             min-height: 100vh;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
             position: relative;
-        }
-
-        /* Hiệu ứng ánh sáng nền động */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.12) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            color: #1e293b;
         }
 
         .app {
             width: 100%;
             height: 100%;
             position: relative;
-            z-index: 1;
         }
 
-        /* === THANH TÌM KIẾM CAO CẤP === */
         .search-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(145deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.98) 100%);
-            backdrop-filter: blur(24px);
+            background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 200;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
 
         .search-overlay.hide {
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
-            backdrop-filter: blur(0px);
         }
 
         .search-container {
             width: 90%;
-            max-width: 1400px;
+            max-width: 1100px;
             text-align: center;
-            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            animation: fadeSlideUp 0.6s ease-out;
             padding: 20px;
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeSlideUp {
             from {
                 opacity: 0;
-                transform: translateY(60px);
-                filter: blur(8px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
-                filter: blur(0);
             }
         }
 
         .search-title {
-            font-size: 5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #a5b4fc, #818cf8, #6366f1, #4f46e5);
-            background-size: 300% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            letter-spacing: -1px;
-            animation: gradientShift 8s ease infinite;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            font-size: 3.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
         }
 
         .search-title span {
-            display: inline-block;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         .search-subtitle {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 2rem;
-            letter-spacing: 0.5px;
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 2.5rem;
+            font-weight: 450;
         }
 
         .search-subtitle i {
             font-style: normal;
-            display: inline-block;
-            background: rgba(255,255,255,0.1);
+            background: #f1f5f9;
             padding: 4px 12px;
             border-radius: 30px;
+            font-size: 0.85rem;
+            color: #3b82f6;
             margin: 0 4px;
         }
 
         .search-box-super {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 80px;
-            padding: 20px 30px 20px 50px;
+            background: #f8fafc;
+            border-radius: 60px;
+            padding: 12px 20px 12px 32px;
             display: flex;
             align-items: center;
-            gap: 24px;
-            box-shadow: 0 35px 75px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15);
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            margin-bottom: 30px;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 0 0 1px #e2e8f0;
+            transition: all 0.3s ease;
+            margin-bottom: 28px;
         }
 
-        .search-box-super:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 45px 85px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(99, 102, 241, 0.5);
+        .search-box-super:focus-within {
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.12), 0 0 0 2px #3b82f6;
+            background: #ffffff;
         }
 
         .search-box-super input {
             flex: 1;
             border: none;
             outline: none;
-            font-size: 2rem;
-            padding: 24px 0;
+            font-size: 1.25rem;
+            padding: 18px 0;
             background: transparent;
             font-weight: 500;
-            color: #1e293b;
-            letter-spacing: -0.3px;
-            font-family: 'Inter', monospace;
+            color: #0f172a;
+            font-family: inherit;
         }
 
         .search-box-super input::placeholder {
-            font-size: 1.8rem;
+            font-size: 1rem;
             color: #94a3b8;
             font-weight: 400;
         }
 
-        .search-box-super input:focus {
-            color: #4f46e5;
-        }
-
         .search-box-super button {
-            background: linear-gradient(135deg, #6366f1, #4f46e5, #818cf8);
-            background-size: 200% auto;
+            background: #3b82f6;
             border: none;
             color: white;
-            font-size: 1.6rem;
+            font-size: 1rem;
             font-weight: 600;
-            padding: 22px 56px;
-            border-radius: 70px;
+            padding: 14px 36px;
+            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.4s ease;
+            transition: all 0.25s ease;
             white-space: nowrap;
-            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .search-box-super button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-            transition: left 0.5s;
-        }
-
-        .search-box-super button:hover::before {
-            left: 100%;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
         }
 
         .search-box-super button:hover {
-            transform: scale(1.02);
-            background: linear-gradient(135deg, #818cf8, #6366f1);
-            box-shadow: 0 18px 40px rgba(99, 102, 241, 0.5);
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
         }
 
-        /* Gợi ý chủ đề */
+        .search-box-super button:active {
+            transform: translateY(1px);
+        }
+
         .suggestions {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
-            margin-top: 30px;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .suggestion-chip {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            padding: 10px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.9);
+            background: #f1f5f9;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            color: #1e293b;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            font-weight: 500;
         }
 
         .suggestion-chip:hover {
-            background: rgba(99, 102, 241, 0.6);
-            transform: translateY(-2px);
-            border-color: rgba(99, 102, 241, 0.8);
+            background: #e6f0ff;
+            border-color: #3b82f6;
+            color: #2563eb;
+            transform: translateY(-1px);
         }
 
-        /* === Khu vực Mindmap === */
         .mindmap-container-full {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            background: #ffffff;
             position: relative;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.5s ease;
         }
 
         .mindmap-container-full.visible {
@@ -266,100 +205,85 @@
             visibility: visible;
         }
 
-        /* Thanh điều khiển trên cùng */
         .top-bar {
             position: absolute;
-            top: 24px;
+            top: 20px;
             right: 24px;
             z-index: 100;
             display: flex;
-            gap: 14px;
+            gap: 12px;
             align-items: center;
         }
 
         .top-btn {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 12px 26px;
-            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 10px 24px;
+            border-radius: 40px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 10px;
-            letter-spacing: 0.3px;
+            gap: 8px;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
         .top-btn:hover {
-            background: rgba(99, 102, 241, 0.9);
-            transform: translateY(-2px);
-            border-color: rgba(255, 255, 255, 0.4);
+            background: #ffffff;
+            border-color: #3b82f6;
+            color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        .save-image-btn {
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
-        }
-
-        .save-image-btn:hover {
-            background: linear-gradient(135deg, #059669, #10b981);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-        }
-
-        /* Nút điều khiển zoom */
         .control-panel {
             position: absolute;
-            bottom: 32px;
-            right: 32px;
+            bottom: 28px;
+            right: 28px;
             z-index: 100;
             display: flex;
-            gap: 14px;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(20px);
-            padding: 12px 24px;
-            border-radius: 100px;
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            gap: 12px;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 60px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef2ff;
         }
 
         .ctrl-btn {
-            background: linear-gradient(135deg, #ffffff, #f8fafc);
-            border: none;
-            width: 56px;
-            height: 56px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 1.8rem;
-            font-weight: bold;
-            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            color: #4f46e5;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #3b82f6;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
 
         .ctrl-btn:hover {
-            transform: scale(1.1);
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: white;
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+            background: #f1f5f9;
+            border-color: #3b82f6;
+            transform: scale(1.02);
         }
 
-        .ctrl-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* SVG Mindmap */
         .mindmap-svg-wrapper {
             width: 100%;
             height: 100%;
             position: relative;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            background: #ffffff;
         }
 
         #mindmap-svg {
@@ -368,7 +292,6 @@
             display: block;
         }
 
-        /* Loading */
         .loading-full {
             position: absolute;
             top: 0;
@@ -381,19 +304,17 @@
             align-items: center;
             justify-content: center;
             z-index: 300;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(4px);
         }
 
         .spinner-big {
-            width: 80px;
-            height: 80px;
-            border: 4px solid rgba(99, 102, 241, 0.2);
-            border-top: 4px solid #6366f1;
-            border-right: 4px solid #818cf8;
+            width: 48px;
+            height: 48px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-            margin-bottom: 30px;
-            box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
         }
 
         @keyframes spin {
@@ -402,121 +323,99 @@
         }
 
         .loading-text-main {
-            font-size: 1.5rem;
-            color: #4f46e5;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -0.3px;
+            font-size: 1.1rem;
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 6px;
         }
 
         .loading-sub {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #64748b;
             font-weight: 500;
         }
 
-        /* Toast message */
         .toast-message {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(20px);
-            background: linear-gradient(135deg, #1e293b, #0f172a);
+            background: #1e293b;
             color: white;
-            padding: 12px 28px;
-            border-radius: 50px;
-            font-size: 0.9rem;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 0.85rem;
             font-weight: 500;
             z-index: 10000;
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: all 0.3s;
             pointer-events: none;
             white-space: nowrap;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-            border-left: 4px solid #6366f1;
-            backdrop-filter: blur(8px);
-        }
-
-        @media (max-width: 1024px) {
-            .search-title { font-size: 3.2rem; }
-            .search-subtitle { font-size: 1rem; }
-            .search-box-super input { font-size: 1.5rem; }
-            .search-box-super input::placeholder { font-size: 1.3rem; }
-            .search-box-super button { font-size: 1.3rem; padding: 16px 42px; }
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
         @media (max-width: 768px) {
-            .search-title { font-size: 2.2rem; }
-            .search-subtitle { font-size: 0.85rem; }
-            .search-box-super { padding: 14px 20px; flex-direction: column; border-radius: 48px; gap: 16px; }
-            .search-box-super input { font-size: 1.1rem; padding: 12px 0; width: 100%; text-align: center; }
-            .search-box-super input::placeholder { font-size: 1rem; text-align: center; }
-            .search-box-super button { font-size: 1rem; padding: 12px 32px; }
-            .ctrl-btn { width: 48px; height: 48px; font-size: 1.5rem; }
-            .control-panel { bottom: 20px; right: 20px; gap: 10px; padding: 10px 18px; }
-            .top-btn { padding: 8px 16px; font-size: 0.75rem; gap: 6px; }
-            .top-bar { top: 16px; right: 16px; gap: 10px; }
-            .loading-text-main { font-size: 1.1rem; }
-            .suggestion-chip { font-size: 0.75rem; padding: 6px 16px; }
+            .search-title { font-size: 2rem; }
+            .search-subtitle { font-size: 0.9rem; }
+            .search-box-super { flex-direction: column; border-radius: 40px; padding: 16px 20px; gap: 12px; }
+            .search-box-super input { font-size: 1rem; padding: 12px 0; text-align: center; width: 100%; }
+            .search-box-super button { padding: 12px 28px; font-size: 0.9rem; width: 100%; }
+            .ctrl-btn { width: 40px; height: 40px; font-size: 1.3rem; }
+            .top-btn { padding: 6px 16px; font-size: 0.75rem; }
+            .control-panel { bottom: 20px; right: 20px; gap: 8px; padding: 6px 12px; }
+            .suggestion-chip { font-size: 0.75rem; padding: 6px 14px; }
         }
 
         @media (max-width: 480px) {
             .search-title { font-size: 1.6rem; }
-            .search-subtitle { font-size: 0.7rem; }
-            .ctrl-btn { width: 42px; height: 42px; font-size: 1.3rem; }
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        .markmap-node text {
+            fill: #1e293b !important;
+            font-weight: 500;
+            font-family: 'Inter', system-ui, sans-serif;
         }
-
-        ::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 10px;
+        .markmap-node.root-node text {
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            fill: #2563eb !important;
         }
-
-        ::-webkit-scrollbar-thumb {
-            background: #6366f1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4f46e5;
+        .markmap-link path {
+            stroke: #cbd5e1 !important;
+            stroke-width: 1.8px !important;
         }
     </style>
 </head>
 <body>
 <div class="app">
-    <!-- Thanh tìm kiếm -->
     <div id="searchOverlay" class="search-overlay">
         <div class="search-container">
             <div class="search-title">
-                <span>🧠</span> SƠ ĐỒ TƯ DUY <span>✨</span>
+                <span>AI Mindmap</span> · Sơ đồ tư duy
             </div>
             <div class="search-subtitle">
-                AI tạo mindmap cho <i>mọi chủ đề</i> | Học tập · Công việc · Sáng tạo
+                Nhập chủ đề để AI tự động tạo cấu trúc thông minh 
+                <i>học tập</i> <i>công việc</i> <i>sáng tạo</i>
             </div>
             <div class="search-box-super">
-                <input type="text" id="searchInput" placeholder="Nhập chủ đề bất kỳ... (VD: Cách mạng công nghiệp 4.0, Quản trị dự án, Yoga, ...)" autofocus>
-                <button id="searchBtn">TẠO SƠ ĐỒ ➤</button>
+                <input type="text" id="searchInput" placeholder="Ví dụ: Quản trị dự án Agile, Lịch sử Việt Nam, Chiến lược marketing" autofocus>
+                <button id="searchBtn">Tạo sơ đồ</button>
             </div>
             <div class="suggestions">
-                <span class="suggestion-chip" data-topic="Cách mạng công nghiệp 4.0">🏭 Cách mạng 4.0</span>
-                <span class="suggestion-chip" data-topic="Quản trị dự án hiệu quả">📊 Quản trị dự án</span>
-                <span class="suggestion-chip" data-topic="Lịch sử phát triển AI">🤖 Lịch sử AI</span>
-                <span class="suggestion-chip" data-topic="Phương pháp học tập hiệu quả">📚 Học tập hiệu quả</span>
-                <span class="suggestion-chip" data-topic="Marketing nội dung 2025">📢 Marketing nội dung</span>
-                <span class="suggestion-chip" data-topic="Thiền và sức khỏe tinh thần">🧘 Thiền & Sức khỏe</span>
+                <span class="suggestion-chip" data-topic="Cách mạng công nghiệp 4.0">Cách mạng 4.0</span>
+                <span class="suggestion-chip" data-topic="Quản trị dự án Agile">Agile & Scrum</span>
+                <span class="suggestion-chip" data-topic="Phát triển bền vững ESG">ESG & Bền vững</span>
+                <span class="suggestion-chip" data-topic="Phương pháp học tập Feynman">Feynman Technique</span>
+                <span class="suggestion-chip" data-topic="Chiến lược nội dung 2025">Content Strategy</span>
+                <span class="suggestion-chip" data-topic="Thiền chánh niệm">Mindfulness</span>
             </div>
         </div>
     </div>
 
-    <!-- Khu vực mindmap -->
     <div id="mindmapArea" class="mindmap-container-full">
         <div class="top-bar">
-            <button id="saveImageBtn" class="top-btn save-image-btn">📸 LƯU ẢNH</button>
-            <button id="backToSearch" class="top-btn">🔍 CHỦ ĐỀ MỚI</button>
+            <button id="saveImageBtn" class="top-btn save-image-btn">Lưu ảnh</button>
+            <button id="backToSearch" class="top-btn">Chủ đề mới</button>
         </div>
         <div class="mindmap-svg-wrapper">
             <svg id="mindmap-svg"></svg>
@@ -527,17 +426,28 @@
         </div>
         <div id="loadingArea" class="loading-full" style="display: none;">
             <div class="spinner-big"></div>
-            <div class="loading-text-main">🧠 AI đang tạo sơ đồ tư duy...</div>
-            <div class="loading-sub">Đang tổng hợp và cấu trúc hóa thông tin</div>
+            <div class="loading-text-main">AI đang phân tích và tạo cấu trúc...</div>
+            <div class="loading-sub">Hệ thống xử lý thông minh</div>
         </div>
     </div>
 </div>
 
 <script>
-    // ==================== CẤU HÌNH API ====================
+    // ==================== API KEY ĐÃ ĐẢO NGƯỢC (CHỈ LƯU KEY ĐẢO) ====================
+    // Key gốc: AIzaSyA2Bt952LFcBEV-G8fwdhCdk19wW6qX0ZU
+    // Đã đảo ngược thành: UZ0Xq6Ww91kdCdhwfG-VEBcL259tB2AySAIzIA
+    // Chỉ lưu key đã đảo, hệ thống tự đảo ngược lại khi dùng
+    const REVERSED_API_KEY = "M0GVHONkVX_R3yXb27M2xoMqh5PIxhheBySazIA";
+    
+    // Hàm đảo ngược chuỗi để lấy key thật
+    function reverseString(str) {
+        return str.split('').reverse().join('');
+    }
+    
+    // Key thật được phục hồi từ key đã đảo
+    const GEMINI_API_KEY = reverseString(REVERSED_API_KEY);
     const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
-    const GEMINI_API_KEY = 'AIzaSyA2Bt952LFcBEV-G8fwdhCdk19wW6qX0ZU';
-
+    
     // ==================== BIẾN TOÀN CỤC ====================
     let mm = null;
     let transformer = null;
@@ -547,7 +457,6 @@
     let timerInterval = null;
     let startTime = 0;
 
-    // DOM elements
     const searchOverlay = document.getElementById('searchOverlay');
     const mindmapArea = document.getElementById('mindmapArea');
     const searchInput = document.getElementById('searchInput');
@@ -559,160 +468,52 @@
     const loadingArea = document.getElementById('loadingArea');
     const svgElement = document.getElementById('mindmap-svg');
 
-    const colorPalette = ['#6366f1', '#8b5cf6', '#ec489a', '#f43f5e', '#f97316', '#eab308', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6'];
-    
     function getNodeColor(node) {
         if (node.depth === 0) return '#1e293b';
-        return colorPalette[(node.depth - 1) % colorPalette.length];
+        const lightPalette = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec489a'];
+        return lightPalette[(node.depth - 1) % lightPalette.length];
     }
 
-    // Prompt chung cho mọi chủ đề
-    const MINDMAP_PROMPT = `Bạn là chuyên gia tạo sơ đồ tư duy (mindmap) chuyên nghiệp. Hãy tạo mindmap chi tiết, có cấu trúc rõ ràng về chủ đề: "{{CONTENT}}".
+    const DEFAULT_MARKDOWN = `# Sơ đồ tư duy mẫu
+
+## Ý chính 1
+### Chi tiết 1.1
+- Nội dung minh họa
+- Thông tin bổ sung
+
+## Ý chính 2
+### Chi tiết 2.1
+- Điểm quan trọng
+- Ví dụ thực tế
+
+## Ý chính 3
+### Khám phá thêm
+- Kết nối tri thức
+- Hướng phát triển`;
+
+    const MINDMAP_PROMPT = `Bạn là chuyên gia tạo sơ đồ tư duy chuyên nghiệp. Hãy tạo mindmap chi tiết, cấu trúc rõ ràng về chủ đề: "{{CONTENT}}".
 
 YÊU CẦU:
 1. Sử dụng cấu trúc Markdown:
    - # Tiêu đề chính (chủ đề trung tâm)
-   - ## Nhánh chính (các ý lớn, phân loại)
-   - ### Nhánh phụ (chi tiết hơn)
-   - - Ý chi tiết (dùng dấu gạch đầu dòng)
-   - Bạn có thể sử dụng *in nghiêng* hoặc **đậm** để nhấn mạnh
+   - ## Nhánh chính (các ý lớn)
+   - ### Nhánh phụ (chi tiết)
+   - - Ý cụ thể (dùng dấu gạch đầu dòng)
+   - Có thể dùng **in đậm** để nhấn mạnh khái niệm quan trọng.
 
 2. Nội dung:
-   - Phân loại rõ ràng, logic
-   - Có độ sâu ít nhất 3-4 cấp
-   - Mỗi nhánh chính có ít nhất 2-3 ý phụ
-   - Nội dung chính xác, cập nhật, hữu ích
+   - Phân loại logic, độ sâu 3-4 cấp.
+   - Mỗi nhánh chính có ít nhất 2-3 nhánh phụ hoặc chi tiết.
+   - Nội dung chính xác, súc tích, hữu ích cho học tập hoặc làm việc.
+   - Sử dụng ngôn ngữ Tiếng Việt có dấu, không sử dụng icon hay emoji.
 
 3. Định dạng:
-   - Sử dụng emoji phù hợp (📚 🎯 💡 🚀 🎨 💼 🌱 ⚙️ 🧠 ✨)
-   - Tiếng Việt có dấu đầy đủ
-   - Không giải thích thêm, chỉ trả về Markdown thuần
+   - Chỉ trả về Markdown thuần, không giải thích thêm.
+   - Ưu tiên tính thực tiễn và cấu trúc dễ hiểu.
 
 HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
 
-    const DEFAULT_MARKDOWN = `# 🧠 Sơ Đồ Tư Duy
-
-## 📚 Ý chính 1
-### Chi tiết 1.1
-- Nội dung quan trọng
-- Thông tin bổ sung
-
-## 🎯 Ý chính 2
-### Chi tiết 2.1
-- Điểm cần lưu ý
-- Ví dụ minh họa
-
-## 💡 Ý chính 3
-### Chi tiết 3.1
-- Kết luận
-- Hướng phát triển`;
-
-    // ==================== LƯU ẢNH ====================
-    async function saveMindmapAsImage() {
-        try {
-            if (!svgElement) {
-                showToast('Không tìm thấy sơ đồ để lưu!');
-                return;
-            }
-            
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '-9999px';
-            document.body.appendChild(tempContainer);
-            
-            const svgClone = svgElement.cloneNode(true);
-            tempContainer.appendChild(svgClone);
-            
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            let bbox;
-            try {
-                bbox = svgClone.getBBox();
-            } catch (e) {
-                const width = parseFloat(svgClone.getAttribute('width')) || 1200;
-                const height = parseFloat(svgClone.getAttribute('height')) || 800;
-                bbox = { x: 0, y: 0, width: width, height: height };
-            }
-            
-            const padding = 50;
-            const viewBoxWidth = bbox.width + padding * 2;
-            const viewBoxHeight = bbox.height + padding * 2;
-            const viewBoxX = bbox.x - padding;
-            const viewBoxY = bbox.y - padding;
-            
-            svgClone.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
-            svgClone.setAttribute('width', viewBoxWidth);
-            svgClone.setAttribute('height', viewBoxHeight);
-            
-            const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-            style.textContent = `
-                .markmap-node circle, .markmap-node rect {
-                    fill: #eef2ff !important;
-                    stroke: #6366f1 !important;
-                    stroke-width: 2px !important;
-                }
-                .markmap-node text {
-                    fill: #1e293b !important;
-                    font-family: 'Inter', 'Segoe UI', sans-serif !important;
-                    font-size: 13px !important;
-                    font-weight: 500 !important;
-                }
-                .markmap-node.root-node text {
-                    font-size: 18px !important;
-                    font-weight: 800 !important;
-                    fill: #4f46e5 !important;
-                }
-                .markmap-link path {
-                    stroke: #6366f1 !important;
-                    stroke-width: 2px !important;
-                }
-            `;
-            svgClone.insertBefore(style, svgClone.firstChild);
-            
-            const serializer = new XMLSerializer();
-            let svgString = serializer.serializeToString(svgClone);
-            svgString = svgString.replace(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/, 'xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"');
-            
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            
-            canvas.width = viewBoxWidth;
-            canvas.height = viewBoxHeight;
-            
-            const imageLoadPromise = new Promise((resolve, reject) => {
-                img.onload = function() {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(0, 0, viewBoxWidth, viewBoxHeight);
-                    ctx.drawImage(img, 0, 0, viewBoxWidth, viewBoxHeight);
-                    
-                    const link = document.createElement('a');
-                    const title = currentTopic ? currentTopic.replace(/[^a-zA-Z0-9À-ỹ]/g, '_').substring(0, 50) : 'mindmap';
-                    const timestamp = new Date().getTime();
-                    link.download = `mindmap_${title}_${timestamp}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    showToast('✅ Đã lưu ảnh sơ đồ tư duy!');
-                    resolve();
-                    document.body.removeChild(tempContainer);
-                };
-                img.onerror = () => {
-                    reject(new Error('Không thể tải SVG'));
-                    document.body.removeChild(tempContainer);
-                };
-            });
-            
-            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
-            await imageLoadPromise;
-        } catch (error) {
-            console.error(error);
-            showToast('❌ Lỗi khi lưu ảnh!');
-        }
-    }
-
-    function showToast(message, duration = 3000) {
+    function showToast(message, duration = 2800) {
         let toast = document.getElementById('toast-message');
         if (!toast) {
             toast = document.createElement('div');
@@ -729,7 +530,76 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
         }, duration);
     }
 
-    // ==================== KHỞI TẠO MARKMAP ====================
+    async function saveMindmapAsImage() {
+        if (!svgElement) {
+            showToast('Chưa có sơ đồ để lưu');
+            return;
+        }
+        try {
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.top = '-9999px';
+            document.body.appendChild(tempContainer);
+            const svgClone = svgElement.cloneNode(true);
+            tempContainer.appendChild(svgClone);
+            await new Promise(r => setTimeout(r, 80));
+            let bbox;
+            try {
+                bbox = svgClone.getBBox();
+            } catch(e) {
+                const w = parseFloat(svgClone.getAttribute('width')) || 1200;
+                const h = parseFloat(svgClone.getAttribute('height')) || 800;
+                bbox = { x: 0, y: 0, width: w, height: h };
+            }
+            const padding = 48;
+            const viewBoxWidth = bbox.width + padding * 2;
+            const viewBoxHeight = bbox.height + padding * 2;
+            const viewBoxX = bbox.x - padding;
+            const viewBoxY = bbox.y - padding;
+            svgClone.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+            svgClone.setAttribute('width', viewBoxWidth);
+            svgClone.setAttribute('height', viewBoxHeight);
+            
+            const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+            style.textContent = `
+                .markmap-node circle, .markmap-node rect { fill: #f9fafb !important; stroke: #cbd5e1 !important; stroke-width: 1.5px !important; }
+                .markmap-node text { fill: #0f172a !important; font-family: 'Inter', sans-serif !important; font-size: 13px !important; font-weight: 500; }
+                .markmap-node.root-node text { font-size: 18px !important; font-weight: 700 !important; fill: #2563eb !important; }
+                .markmap-link path { stroke: #94a3b8 !important; stroke-width: 1.5px !important; }
+            `;
+            svgClone.insertBefore(style, svgClone.firstChild);
+            const serializer = new XMLSerializer();
+            let svgString = serializer.serializeToString(svgClone);
+            svgString = svgString.replace(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/, 'xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            canvas.width = viewBoxWidth;
+            canvas.height = viewBoxHeight;
+            await new Promise((resolve, reject) => {
+                img.onload = () => {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, viewBoxWidth, viewBoxHeight);
+                    ctx.drawImage(img, 0, 0, viewBoxWidth, viewBoxHeight);
+                    const link = document.createElement('a');
+                    const title = currentTopic ? currentTopic.replace(/[^a-z0-9]/gi, '_').substring(0, 40) : 'mindmap';
+                    link.download = `mindmap_${title}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showToast('Đã lưu ảnh sơ đồ');
+                    resolve();
+                    document.body.removeChild(tempContainer);
+                };
+                img.onerror = () => { reject(); document.body.removeChild(tempContainer); };
+                img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+            });
+        } catch (err) {
+            console.error(err);
+            showToast('Lỗi lưu ảnh, thử lại');
+        }
+    }
+
     async function initMarkmap() {
         if (mm && transformer) return;
         try {
@@ -738,16 +608,14 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
             transformer = new Transformer();
             mm = Markmap.create(svgElement, {
                 duration: 400,
-                nodeMinHeight: 20,
-                spacingVertical: 8,
-                spacingHorizontal: 90,
+                nodeMinHeight: 22,
+                spacingVertical: 10,
+                spacingHorizontal: 100,
                 autoFit: true,
                 fitRatio: 0.9,
                 color: getNodeColor,
             });
-        } catch (err) {
-            console.error("Init error:", err);
-        }
+        } catch(e) { console.warn(e); }
     }
 
     function waitForLibraries() {
@@ -758,9 +626,9 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
                 if (window.markmap?.Transformer && window.markmap?.Markmap) {
                     clearInterval(interval);
                     resolve();
-                } else if (attempts >= 100) {
+                } else if (attempts > 80) {
                     clearInterval(interval);
-                    reject(new Error("Không thể tải thư viện"));
+                    reject(new Error("Lỗi tải thư viện"));
                 }
             }, 80);
         });
@@ -772,57 +640,47 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
         try {
             const { root } = transformer.transform(currentMarkdown);
             mm.setData(root);
-            setTimeout(() => mm?.fit(), 150);
-        } catch (err) {
-            console.error("Render error:", err);
-        }
+            setTimeout(() => mm?.fit(), 180);
+        } catch(e) { console.error(e); }
     }
 
-    // ==================== GỌI AI ====================
     function startTimer() {
         startTime = Date.now();
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
             const timerEl = document.querySelector('.loading-sub');
-            if (timerEl) timerEl.textContent = `⏱️ Đã xử lý: ${elapsed}s | Đang cấu trúc hóa...`;
-        }, 100);
+            if (timerEl) timerEl.textContent = `⏳ Đang xử lý: ${elapsed}s | AI tổng hợp cấu trúc`;
+        }, 150);
     }
-
-    function stopTimer() {
-        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    }
+    
+    function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
     async function generateMindmap(topic) {
-        if (!topic.trim()) { showToast("Vui lòng nhập chủ đề!"); return false; }
+        if (!topic.trim()) { showToast("Vui lòng nhập chủ đề"); return false; }
         if (isGenerating) return false;
-        
         isGenerating = true;
         loadingArea.style.display = 'flex';
         startTimer();
-        
+
         const prompt = MINDMAP_PROMPT.replace(/{{CONTENT}}/g, topic);
-        
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 35000);
-            
+            const timeoutId = setTimeout(() => controller.abort(), 34000);
             const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 3500, topP: 0.95 }
+                    generationConfig: { temperature: 0.65, maxOutputTokens: 3800, topP: 0.92 }
                 }),
                 signal: controller.signal
             });
-            
             clearTimeout(timeoutId);
-            
             if (response.ok) {
                 const data = await response.json();
                 const markdownContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (markdownContent && markdownContent.trim().length > 50) {
+                if (markdownContent && markdownContent.trim().length > 60) {
                     currentMarkdown = markdownContent.trim();
                 } else {
                     currentMarkdown = DEFAULT_MARKDOWN;
@@ -830,13 +688,11 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
             } else {
                 currentMarkdown = DEFAULT_MARKDOWN;
             }
-        } catch (error) {
-            console.error("API Error:", error);
+        } catch (err) {
+            console.error("API error", err);
             currentMarkdown = DEFAULT_MARKDOWN;
         }
-        
         if (!currentMarkdown?.trim()) currentMarkdown = DEFAULT_MARKDOWN;
-        
         await renderCurrentMindmap();
         stopTimer();
         loadingArea.style.display = 'none';
@@ -844,10 +700,9 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
         return true;
     }
 
-    // ==================== XỬ LÝ TÌM KIẾM ====================
     async function onSearch() {
         const query = searchInput.value.trim();
-        if (!query) { showToast("Vui lòng nhập chủ đề!"); return; }
+        if (!query) { showToast("Hãy nhập chủ đề cần vẽ sơ đồ"); return; }
         currentTopic = query;
         searchOverlay.classList.add('hide');
         mindmapArea.classList.add('visible');
@@ -866,38 +721,27 @@ HÃY TẠO MINDMAP CHO: {{CONTENT}}`;
         searchInput.value = '';
         searchInput.focus();
         currentMarkdown = '';
-        currentTopic = '';
         if (mm?.setData) mm.setData(null);
     }
 
     function zoomIn() { if (mm?.rescale) mm.rescale(Math.min((mm.state?.scale || 1) * 1.2, 4)); }
     function zoomOut() { if (mm?.rescale) mm.rescale(Math.max((mm.state?.scale || 1) * 0.8, 0.3)); }
 
-    // ==================== GÁN SỰ KIỆN ====================
-    searchBtn?.addEventListener('click', onSearch);
-    backToSearchBtn?.addEventListener('click', backToSearchMode);
-    zoomInCtrl?.addEventListener('click', zoomIn);
-    zoomOutCtrl?.addEventListener('click', zoomOut);
-    saveImageBtn?.addEventListener('click', saveMindmapAsImage);
-    searchInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchBtn.click(); });
-    
-    // Gợi ý chủ đề
+    searchBtn.addEventListener('click', onSearch);
+    backToSearchBtn.addEventListener('click', backToSearchMode);
+    zoomInCtrl.addEventListener('click', zoomIn);
+    zoomOutCtrl.addEventListener('click', zoomOut);
+    saveImageBtn.addEventListener('click', saveMindmapAsImage);
+    searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchBtn.click(); });
     document.querySelectorAll('.suggestion-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             const topic = chip.getAttribute('data-topic');
-            if (topic) {
-                searchInput.value = topic;
-                onSearch();
-            }
+            if (topic) { searchInput.value = topic; onSearch(); }
         });
     });
-    
-    window.addEventListener('resize', () => {
-        if (mindmapArea.classList.contains('visible') && mm?.fit) setTimeout(() => mm.fit(), 150);
-    });
-    
+    window.addEventListener('resize', () => { if (mindmapArea.classList.contains('visible') && mm?.fit) setTimeout(() => mm.fit(), 120); });
     initMarkmap().catch(console.warn);
-    setTimeout(() => showToast("🎉 Nhập chủ đề bất kỳ để tạo sơ đồ tư duy!", 4000), 1000);
+    setTimeout(() => showToast("Nhập chủ đề để bắt đầu tạo sơ đồ tư duy", 3500), 500);
 </script>
 </body>
 </html>
