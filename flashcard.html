@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Card Lịch sử - Lisu AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #ffffff;
+            --card-bg: #fffaf5;
+            --orange: #e67e22;
+            --orange2: #d35400;
+            --orange-pale: rgba(230,126,34,0.06);
+            --border: #ffe0b5;
+            --text-dark: #2c3e50;
+            --text-mid: #7f8c8d;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #fef5e8 0%, #fff0e0 100%);
+            min-height: 100vh;
+            padding-top: 72px;
+        }
+        
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6%;
+            height: 72px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        
+        .logo-mark {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--orange2), var(--orange));
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .logo-type {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        
+        .logo-type em { font-style: italic; color: var(--orange); }
+        
+        .nav-links {
+            display: flex;
+            gap: 28px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-mid);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--orange);
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 10px 18px;
+            color: var(--orange);
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 6%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.5em;
+            color: var(--text-dark);
+        }
+        
+        .header h1 i {
+            color: var(--orange);
+            margin-right: 15px;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tab-btn {
+            padding: 12px 32px;
+            font-size: 1em;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            background: white;
+            color: var(--text-mid);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--orange2), var(--orange));
+            color: white;
+            border-color: var(--orange);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px var(--orange-pale);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--orange2), var(--orange));
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230,126,34,0.3);
+        }
+        
+        .deck-list {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .deck-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 15px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .deck-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--orange);
+        }
+        
+        .deck-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .deck-item h4 {
+            color: var(--text-dark);
+            font-size: 0.9em;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            color: #e74c3c;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            padding: 40px;
+            min-height: 400px;
+            background: var(--card-bg);
+            border-radius: 30px;
+            perspective: 2000px;
+        }
+        
+        .card-wrapper {
+            width: 180px;
+            height: 250px;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .card-wrapper:hover {
+            transform: translateY(-10px);
+        }
+        
+        .flash-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 16px;
+        }
+        
+        .card-wrapper.flipped .flash-card {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: 2px solid white;
+        }
+        
+        .card-front i {
+            font-size: 3em;
+            color: white;
+            margin-bottom: 15px;
+        }
+        
+        .card-front h3 {
+            color: white;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        
+        .card-back {
+            background: white;
+            transform: rotateY(180deg);
+        }
+        
+        .card-back img {
+            width: 100%;
+            height: 130px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .card-back h4 {
+            color: var(--text-dark);
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .modal-content img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+        
+        .modal-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        
+        .score-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .score-modal.active { display: flex; }
+        
+        .score-content {
+            background: linear-gradient(135deg, var(--orange2), var(--orange));
+            padding: 50px;
+            border-radius: 40px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            font-weight: bold;
+            border: 3px solid #ffd700;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            align-items: flex-end;
+        }
+        
+        @media (max-width: 600px) {
+            .game-controls { flex-direction: column; align-items: stretch; }
+            .cards-container { padding: 20px; }
+            .card-wrapper { width: 140px; height: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html" class="logo">
+            <div class="logo-mark"><i class="fas fa-scroll"></i></div>
+            <div class="logo-type">Lisu<em>AI</em></div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html"><i class="fas fa-home"></i> Trang chủ</a>
+            <a href="flashcard.html" class="active"><i class="fas fa-layer-group"></i> Flash Card</a>
+            <a href="chatbot.html"><i class="fas fa-comments"></i> Chatbot AI</a>
+            <a href="mindmap.html"><i class="fas fa-brain"></i> Mindmap</a>
+            <a href="map.html"><i class="fas fa-map"></i> Bản đồ</a>
+        </div>
+        <button class="menu-toggle" onclick="alert('Chuyển hướng đến các trang: index.html, chatbot.html, mindmap.html, map.html')">
+            <i class="fas fa-bars"></i> Menu
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-landmark"></i> Flash Card Lịch sử</h1>
+            <p>Học các sự kiện, nhân vật và nền văn minh qua thẻ ghi nhớ</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('create')">
+                <i class="fas fa-plus-circle"></i> Tạo thẻ mới
+            </button>
+            <button class="tab-btn" onclick="switchTab('play')">
+                <i class="fas fa-play-circle"></i> Học ngay
+            </button>
+        </div>
+
+        <div id="create-tab" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;"><i class="fas fa-pen"></i> Thêm sự kiện lịch sử</h2>
+                <form id="flashcard-form" onsubmit="addFlashCard(event)">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Tên sự kiện / Nhân vật</label>
+                        <input type="text" class="form-control" id="card-name" placeholder="Ví dụ: Cách mạng Tháng Tám, Hồ Chí Minh, Chiến tranh thế giới thứ hai..." required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-image"></i> Hình ảnh (URL)</label>
+                        <input type="url" class="form-control" id="image-url" placeholder="https://example.com/image.jpg" required>
+                    </div>
+                    <button type="submit" class="btn"><i class="fas fa-save"></i> Thêm vào bộ thẻ</button>
+                </form>
+
+                <div style="margin-top: 40px;">
+                    <h3><i class="fas fa-layer-group"></i> Bộ sưu tập (<span id="card-count-display">0</span> thẻ)</h3>
+                    <div id="flashcard-list" class="deck-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="play-tab" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-gamepad"></i> Chế độ học</h2>
+                <div class="game-controls">
+                    <div class="form-group">
+                        <label>Số lượng thẻ (tối đa 10)</label>
+                        <input type="number" class="form-control" id="card-count" value="5" min="1" max="10">
+                    </div>
+                    <button class="btn" onclick="startGame()"><i class="fas fa-shuffle"></i> Xào bài & Bắt đầu</button>
+                </div>
+                <div id="cards-container" class="cards-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="card-modal" class="modal">
+        <div class="modal-content">
+            <img id="modal-image" src="" alt="Hình ảnh">
+            <h3>Đây là sự kiện / nhân vật lịch sử nào?</h3>
+            <div class="modal-input">
+                <input type="text" id="modal-answer" placeholder="Nhập câu trả lời...">
+                <button onclick="submitModalAnswer()"><i class="fas fa-check"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="score-modal" class="score-modal">
+        <div class="score-content">
+            <i class="fas fa-trophy" style="font-size: 3em;"></i>
+            <h2>Kết quả</h2>
+            <div class="score-circle">
+                <span id="score-display">0</span>
+            </div>
+            <p id="score-message" style="margin-top: 20px;"></p>
+            <button class="btn" style="margin-top: 20px;" onclick="closeScoreModal()">Chơi tiếp</button>
+        </div>
+    </div>
+
+    <script>
+        let flashcards = JSON.parse(localStorage.getItem('history_flashcards')) || [];
+        let currentGameCards = [];
+        let currentModalCard = null;
+        let currentModalIndex = null;
+        let score = 0;
+        let totalCards = 0;
+
+        // Dữ liệu mẫu về lịch sử
+        const sampleData = [
+            { name: "Cách mạng Tháng Tám (1945)", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Ho_Chi_Minh_1946.jpg/200px-Ho_Chi_Minh_1946.jpg" },
+            { name: "Chiến tranh thế giới thứ hai", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Second_world_war_europe_1941-1942_map_de.png/200px-Second_world_war_europe_1941-1942_map_de.png" },
+            { name: "Văn hóa Đông Sơn", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Dong_Son_drum.jpg/200px-Dong_Son_drum.jpg" }
+        ];
+
+        if (flashcards.length === 0) {
+            flashcards = sampleData;
+            localStorage.setItem('history_flashcards', JSON.stringify(flashcards));
+        }
+
+        function displayFlashCards() {
+            const listElement = document.getElementById('flashcard-list');
+            document.getElementById('card-count-display').textContent = flashcards.length;
+            
+            if (flashcards.length === 0) {
+                listElement.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--text-mid);">Chưa có thẻ nào. Hãy tạo thẻ đầu tiên!</div>';
+                return;
+            }
+
+            listElement.innerHTML = flashcards.map((card, index) => `
+                <div class="deck-item">
+                    <img src="${card.imageUrl}" alt="${card.name}" onerror="this.src='https://placehold.co/200x150?text=No+Image'">
+                    <h4>${card.name}</h4>
+                    <button class="delete-btn" onclick="deleteFlashCard(${index})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function addFlashCard(event) {
+            event.preventDefault();
+            const name = document.getElementById('card-name').value;
+            const imageUrl = document.getElementById('image-url').value;
+            flashcards.push({ name, imageUrl });
+            localStorage.setItem('history_flashcards', JSON.stringify(flashcards));
+            document.getElementById('flashcard-form').reset();
+            displayFlashCards();
+            alert('Đã thêm thẻ mới!');
+        }
+
+        function deleteFlashCard(index) {
+            if (confirm('Xóa thẻ này?')) {
+                flashcards.splice(index, 1);
+                localStorage.setItem('history_flashcards', JSON.stringify(flashcards));
+                displayFlashCards();
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            if (tab === 'create') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('create-tab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('play-tab').classList.add('active');
+            }
+        }
+
+        function startGame() {
+            if (flashcards.length === 0) {
+                alert('Chưa có thẻ nào! Hãy tạo thẻ trước khi học.');
+                return;
+            }
+            const count = Math.min(parseInt(document.getElementById('card-count').value) || 5, flashcards.length, 10);
+            currentGameCards = [...flashcards].sort(() => Math.random() - 0.5).slice(0, count).map(card => ({ ...card, isFlipped: false, isAnswered: false, isCorrect: false }));
+            score = 0;
+            totalCards = count;
+            displayCards();
+        }
+
+        function displayCards() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = currentGameCards.map((card, index) => `
+                <div class="card-wrapper ${card.isFlipped ? 'flipped' : ''}" onclick="handleCardClick(${index})" data-index="${index}">
+                    <div class="flash-card">
+                        <div class="card-front">
+                            <i class="fas fa-question-circle"></i>
+                            <h3>???</h3>
+                        </div>
+                        <div class="card-back">
+                            <img src="${card.imageUrl}" onerror="this.src='https://placehold.co/180x130?text=No+Image'">
+                            <h4>${card.isAnswered ? (card.isCorrect ? '✓ ' + card.name : '✗ ' + card.name) : ''}</h4>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleCardClick(index) {
+            const card = currentGameCards[index];
+            if (card.isAnswered) return;
+            
+            card.isFlipped = true;
+            displayCards();
+            
+            currentModalCard = card;
+            currentModalIndex = index;
+            const modal = document.getElementById('card-modal');
+            document.getElementById('modal-image').src = card.imageUrl;
+            document.getElementById('modal-answer').value = '';
+            modal.classList.add('active');
+        }
+
+        function submitModalAnswer() {
+            const answer = document.getElementById('modal-answer').value.trim().toLowerCase();
+            if (!answer || !currentModalCard) return;
+            
+            const isCorrect = answer === currentModalCard.name.toLowerCase();
+            currentModalCard.isAnswered = true;
+            currentModalCard.isCorrect = isCorrect;
+            if (isCorrect) score++;
+            
+            document.getElementById('card-modal').classList.remove('active');
+            displayCards();
+            checkGameComplete();
+        }
+
+        function checkGameComplete() {
+            if (currentGameCards.every(card => card.isAnswered)) {
+                const percent = Math.round((score / totalCards) * 10);
+                document.getElementById('score-display').textContent = percent;
+                let msg = percent >= 8 ? 'Xuất sắc! Bạn rất am hiểu lịch sử!' : percent >= 5 ? 'Tốt! Hãy học thêm nhé!' : 'Cố gắng hơn nữa!';
+                document.getElementById('score-message').textContent = `${msg} (${score}/${totalCards} đúng)`;
+                document.getElementById('score-modal').classList.add('active');
+            }
+        }
+
+        function closeScoreModal() {
+            document.getElementById('score-modal').classList.remove('active');
+        }
+
+        displayFlashCards();
+    </script>
+</body>
+</html>
