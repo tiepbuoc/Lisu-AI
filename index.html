@@ -64,6 +64,53 @@ nav{
   transition:color .2s;
 }
 .nav-link:hover{color:var(--orange)}
+
+/* Menu dropdown cho các trang */
+.pages-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.pages-btn {
+  background: transparent;
+  border: none;
+  font-size:13px;
+  font-weight:500;
+  color:var(--text-mid);
+  cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+.pages-btn:hover{color:var(--orange)}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  min-width: 180px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  z-index: 101;
+  overflow: hidden;
+}
+.dropdown-content a {
+  color: var(--text-dark);
+  padding: 12px 20px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.dropdown-content a i { width: 20px; color: var(--orange); }
+.dropdown-content a:hover { background: var(--orange-pale); color: var(--orange); }
+.pages-dropdown:hover .dropdown-content { display: block; }
+
 .nav-btn{
   background:transparent;
   border:1px solid var(--border);
@@ -79,6 +126,43 @@ nav{
   border-color:var(--orange);
   box-shadow:0 0 20px rgba(230,126,34,0.2);
 }
+
+/* Menu mobile toggle */
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 8px 16px;
+  font-size: 18px;
+  color: var(--orange);
+  cursor: pointer;
+}
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  z-index: 99;
+  flex-direction: column;
+  gap: 12px;
+}
+.mobile-menu a {
+  color: var(--text-dark);
+  text-decoration: none;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-menu a i { width: 24px; color: var(--orange); }
+.mobile-menu.show { display: flex; }
 
 /* ── HERO ── */
 .hero{
@@ -361,6 +445,8 @@ footer{
   .steps-grid{grid-template-columns:repeat(2,1fr)}
   .download-card{padding:40px 24px}
   .nav-right .nav-link{display:none}
+  .pages-dropdown{display:none}
+  .menu-toggle{display:block}
   .desktop-sub{display:none}
 }
 @media(max-width:600px){
@@ -383,17 +469,42 @@ footer{
 <body>
 
 <nav id="nav">
-  <a href="#" class="logo">
+  <a href="index.html" class="logo">
     <div class="logo-mark"><i class="fas fa-scroll"></i></div>
     <div class="logo-type">Lisu<em>AI</em></div>
   </a>
   <div class="nav-right">
-    <a href="#features" class="nav-link"><i class="fas fa-cogs"></i> Tính năng</a>
-    <a href="#how" class="nav-link"><i class="fas fa-rocket"></i> Cách dùng</a>
-    <a href="#author" class="nav-link"><i class="fas fa-user"></i> Tác giả</a>
+    <a href="index.html#features" class="nav-link"><i class="fas fa-cogs"></i> Tính năng</a>
+    <a href="index.html#how" class="nav-link"><i class="fas fa-rocket"></i> Cách dùng</a>
+    <a href="index.html#author" class="nav-link"><i class="fas fa-user"></i> Tác giả</a>
+    
+    <!-- Dropdown menu cho các trang -->
+    <div class="pages-dropdown">
+      <button class="pages-btn"><i class="fas fa-th-large"></i> Ứng dụng <i class="fas fa-chevron-down"></i></button>
+      <div class="dropdown-content">
+        <a href="mindmap.html"><i class="fas fa-brain"></i> Sơ đồ tư duy (Mindmap)</a>
+        <a href="flashcard.html"><i class="fas fa-layer-group"></i> Flash Card</a>
+        <a href="chatbot.html"><i class="fas fa-robot"></i> Chatbot AI</a>
+        <a href="map.html"><i class="fas fa-map"></i> Bản đồ lịch sử</a>
+      </div>
+    </div>
+    
     <button class="nav-btn" id="downloadNavBtn"><i class="fas fa-download"></i> Tải Lisu.zip</button>
+    <button class="menu-toggle" id="menuToggleBtn"><i class="fas fa-bars"></i> Menu</button>
   </div>
 </nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html#features"><i class="fas fa-cogs"></i> Tính năng</a>
+  <a href="index.html#how"><i class="fas fa-rocket"></i> Cách dùng</a>
+  <a href="index.html#author"><i class="fas fa-user"></i> Tác giả</a>
+  <a href="mindmap.html"><i class="fas fa-brain"></i> Sơ đồ tư duy</a>
+  <a href="flashcard.html"><i class="fas fa-layer-group"></i> Flash Card</a>
+  <a href="chatbot.html"><i class="fas fa-robot"></i> Chatbot AI</a>
+  <a href="map.html"><i class="fas fa-map"></i> Bản đồ lịch sử</a>
+  <button class="nav-btn" id="mobileDownloadBtn" style="margin-top: 8px;"><i class="fas fa-download"></i> Tải Lisu.zip</button>
+</div>
 
 <section class="hero">
   <div class="hero-eyebrow">
@@ -411,7 +522,7 @@ footer{
     <button class="btn-main" id="downloadHeroBtn">
       <i class="fas fa-download"></i> Tải Lisu.zip
     </button>
-    <a href="#how" class="btn-ghost">
+    <a href="index.html#how" class="btn-ghost">
       <i class="fas fa-play-circle"></i> Xem hướng dẫn <span>↓</span>
     </a>
   </div>
@@ -542,7 +653,7 @@ footer{
     document.body.removeChild(link);
   }
 
-  const downloadBtns = ['downloadNavBtn', 'downloadHeroBtn', 'downloadZipBtn'];
+  const downloadBtns = ['downloadNavBtn', 'downloadHeroBtn', 'downloadZipBtn', 'mobileDownloadBtn'];
   downloadBtns.forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener('click', (e) => {
@@ -550,6 +661,15 @@ footer{
       triggerDownloadZip();
     });
   });
+
+  // Mobile menu toggle
+  const menuToggleBtn = document.getElementById('menuToggleBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('show');
+    });
+  }
 
   // SCROLL REVEAL
   const obs = new IntersectionObserver((entries) => {
