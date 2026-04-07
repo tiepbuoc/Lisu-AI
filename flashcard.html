@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,6 +7,9 @@
     <title>Flash Card Lịch sử - Lisu AI | Học với hiệu ứng bài Tây</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -25,6 +29,43 @@
             background: linear-gradient(135deg, #fef5e8 0%, #fff0e0 100%);
             min-height: 100vh;
             padding-top: 72px;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+        }
+        
+        .loading-spinner i {
+            font-size: 3em;
+            color: var(--orange);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         /* Navbar */
@@ -220,6 +261,11 @@
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(230,126,34,0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .deck-list {
@@ -598,10 +644,19 @@
             <a href="chatbot.html"><i class="fas fa-comments"></i> Chatbot AI</a>
             <a href="mindmap.html"><i class="fas fa-brain"></i> Mindmap</a>
             <a href="map.html"><i class="fas fa-map"></i> Bản đồ</a>
+            <a href="thithu.html"><i class="fas fa-book"></i> Thi thử</a>
         </div>
         <button class="menu-toggle" onclick="alert('Chuyển hướng đến các trang: index.html, chatbot.html, mindmap.html, map.html')">
             <i class="fas fa-bars"></i> Menu
         </button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner"></i>
+            <p style="margin-top: 15px;">Đang tải dữ liệu...</p>
+        </div>
     </div>
 
     <div class="container">
@@ -680,8 +735,23 @@
     </div>
 
     <script>
-        // ---------- DỮ LIỆU LỊCH SỬ (GIỮ NGUYÊN NỘI DUNG CODE 1) ----------
-        let flashcards = JSON.parse(localStorage.getItem('history_flashcards')) || [];
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2GOVFjO0jIHfyF6Cm4i7ZF3e9cMI0E6o",
+            authDomain: "lisu-580b9.firebaseapp.com",
+            projectId: "lisu-580b9",
+            storageBucket: "lisu-580b9.firebasestorage.app",
+            messagingSenderId: "625966703998",
+            appId: "1:625966703998:web:385b6cc2895b46a33fbf2f",
+            measurementId: "G-5K6910GR7H"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // ==================== GLOBAL VARIABLES ====================
+        let flashcards = []; // Sẽ được load từ Firestore
         let currentGameCards = [];
         let currentModalCard = null;
         let currentModalIndex = null;
@@ -689,57 +759,166 @@
         let totalCards = 0;
         let isFlipping = false;
         let hasDealt = false;
-
-        // Mẫu dữ liệu lịch sử (code 1)
+        
+        // Sample data mặc định
         const sampleData = [
             { name: "Cách mạng Tháng Tám (1945)", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Ho_Chi_Minh_1946.jpg/200px-Ho_Chi_Minh_1946.jpg" },
             { name: "Chiến tranh thế giới thứ hai", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Second_world_war_europe_1941-1942_map_de.png/200px-Second_world_war_europe_1941-1942_map_de.png" },
             { name: "Văn hóa Đông Sơn", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Dong_Son_drum.jpg/200px-Dong_Son_drum.jpg" }
         ];
 
-        if (flashcards.length === 0) {
-            flashcards = sampleData;
-            localStorage.setItem('history_flashcards', JSON.stringify(flashcards));
+        // ==================== FIREBASE OPERATIONS ====================
+        
+        // Hiển thị loading
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.add('active');
         }
-
+        
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+        
+        // Load flashcards từ Firestore
+        async function loadFlashcardsFromFirestore() {
+            showLoading();
+            try {
+                const snapshot = await db.collection('flashcards').orderBy('createdAt', 'desc').get();
+                flashcards = [];
+                
+                if (snapshot.empty) {
+                    // Nếu chưa có dữ liệu, thêm sample data vào Firestore
+                    console.log('Chưa có dữ liệu, đang thêm mẫu...');
+                    for (const sample of sampleData) {
+                        await db.collection('flashcards').add({
+                            name: sample.name,
+                            imageUrl: sample.imageUrl,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    // Load lại sau khi thêm
+                    const newSnapshot = await db.collection('flashcards').orderBy('createdAt', 'desc').get();
+                    newSnapshot.forEach(doc => {
+                        flashcards.push({
+                            id: doc.id,
+                            name: doc.data().name,
+                            imageUrl: doc.data().imageUrl
+                        });
+                    });
+                } else {
+                    snapshot.forEach(doc => {
+                        flashcards.push({
+                            id: doc.id,
+                            name: doc.data().name,
+                            imageUrl: doc.data().imageUrl
+                        });
+                    });
+                }
+                
+                displayFlashCards();
+                hideLoading();
+            } catch (error) {
+                console.error('Lỗi khi load dữ liệu:', error);
+                hideLoading();
+                alert('Có lỗi khi tải dữ liệu từ Firestore. Vui lòng kiểm tra kết nối.');
+            }
+        }
+        
+        // Thêm flashcard mới vào Firestore
+        async function addFlashCardToFirestore(name, imageUrl) {
+            showLoading();
+            try {
+                await db.collection('flashcards').add({
+                    name: name,
+                    imageUrl: imageUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await loadFlashcardsFromFirestore(); // Reload lại danh sách
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.error('Lỗi khi thêm thẻ:', error);
+                hideLoading();
+                alert('Có lỗi khi thêm thẻ vào bộ nhớ.');
+                return false;
+            }
+        }
+        
+        // Xóa flashcard khỏi Firestore
+        async function deleteFlashCardFromFirestore(id) {
+            showLoading();
+            try {
+                await db.collection('flashcards').doc(id).delete();
+                await loadFlashcardsFromFirestore(); // Reload lại danh sách
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.error('Lỗi khi xóa thẻ:', error);
+                hideLoading();
+                alert('Có lỗi khi xóa thẻ khỏi bộ nhớ.');
+                return false;
+            }
+        }
+        
+        // ==================== UI FUNCTIONS ====================
+        
         function displayFlashCards() {
             const listElement = document.getElementById('flashcard-list');
-            document.getElementById('card-count-display').textContent = flashcards.length;
+            const countElement = document.getElementById('card-count-display');
+            
+            if (!listElement) return;
+            
+            countElement.textContent = flashcards.length;
+            
             if (flashcards.length === 0) {
                 listElement.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--text-mid);">Chưa có thẻ nào. Hãy tạo thẻ đầu tiên!</div>';
                 return;
             }
-            listElement.innerHTML = flashcards.map((card, index) => `
-                <div class="deck-item">
+            
+            listElement.innerHTML = flashcards.map((card) => `
+                <div class="deck-item" data-id="${card.id}">
                     <img src="${card.imageUrl}" alt="${card.name}" onerror="this.src='https://placehold.co/200x150?text=No+Image'">
-                    <h4>${card.name}</h4>
-                    <button class="delete-btn" onclick="deleteFlashCard(${index})"><i class="fas fa-trash"></i></button>
+                    <h4>${escapeHtml(card.name)}</h4>
+                    <button class="delete-btn" onclick="deleteFlashCard('${card.id}')"><i class="fas fa-trash"></i></button>
                 </div>
             `).join('');
         }
-
-        function addFlashCard(event) {
-            event.preventDefault();
-            const name = document.getElementById('card-name').value;
-            const imageUrl = document.getElementById('image-url').value;
-            flashcards.push({ name, imageUrl });
-            localStorage.setItem('history_flashcards', JSON.stringify(flashcards));
-            document.getElementById('flashcard-form').reset();
-            displayFlashCards();
-            alert('Đã thêm thẻ lịch sử mới!');
+        
+        // Escape HTML để tránh XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
-
-        function deleteFlashCard(index) {
-            if (confirm('Xóa thẻ này?')) {
-                flashcards.splice(index, 1);
-                localStorage.setItem('history_flashcards', JSON.stringify(flashcards));
-                displayFlashCards();
+        
+        // Thêm flashcard (xử lý form)
+        async function addFlashCard(event) {
+            event.preventDefault();
+            const name = document.getElementById('card-name').value.trim();
+            const imageUrl = document.getElementById('image-url').value.trim();
+            
+            if (!name || !imageUrl) {
+                alert('Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+            
+            const success = await addFlashCardToFirestore(name, imageUrl);
+            if (success) {
+                document.getElementById('flashcard-form').reset();
+                alert('Đã thêm thẻ lịch sử mới vào bộ nhớ!');
             }
         }
-
+        
+        // Xóa flashcard
+        async function deleteFlashCard(id) {
+            if (confirm('Xóa thẻ này khỏi Firestore?')) {
+                await deleteFlashCardFromFirestore(id);
+            }
+        }
+        
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
             if (tab === 'create') {
                 document.querySelector('.tab-btn:first-child').classList.add('active');
                 document.getElementById('create-tab').classList.add('active');
@@ -748,26 +927,40 @@
                 document.getElementById('play-tab').classList.add('active');
             }
         }
-
+        
         // BẮT ĐẦU GAME VỚI HIỆU ỨNG GIỐNG CODE 2
         function startGame() {
             if (flashcards.length === 0) {
                 alert('Chưa có thẻ nào! Hãy tạo thẻ trước khi học.');
                 return;
             }
-            const count = Math.min(parseInt(document.getElementById('card-count').value) || 5, flashcards.length, 10);
+            
+            const countInput = document.getElementById('card-count');
+            let count = parseInt(countInput.value) || 5;
+            count = Math.min(count, flashcards.length, 10);
+            
             // Xào bài
-            currentGameCards = [...flashcards].sort(() => Math.random() - 0.5).slice(0, count).map(card => ({
-                ...card,
+            const shuffled = [...flashcards];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            
+            currentGameCards = shuffled.slice(0, count).map(card => ({
+                id: card.id,
+                name: card.name,
+                imageUrl: card.imageUrl,
                 isFlipped: false,
                 isAnswered: false,
                 isCorrect: false,
                 isFlipping: false
             }));
+            
             score = 0;
             totalCards = count;
             hasDealt = false;
             displayCardsGame();
+            
             // Kích hoạt animation phát bài sau khi render
             setTimeout(() => {
                 const wrappers = document.querySelectorAll('#cards-container .card-wrapper');
@@ -775,9 +968,11 @@
                 hasDealt = true;
             }, 50);
         }
-
+        
         function displayCardsGame() {
             const container = document.getElementById('cards-container');
+            if (!container) return;
+            
             container.innerHTML = currentGameCards.map((card, idx) => {
                 let backClass = 'card-back';
                 if (!card.isAnswered) {
@@ -786,6 +981,7 @@
                     backClass += ' answered';
                     backClass += card.isCorrect ? ' correct' : ' incorrect';
                 }
+                
                 return `
                     <div class="card-wrapper ${card.isFlipped ? 'flipped' : ''} ${card.isFlipping ? 'flipping' : ''}" data-index="${idx}" onclick="handleCardClick(${idx})">
                         <div class="flash-card">
@@ -799,7 +995,7 @@
                                     <div class="back-text">Sự kiện ?</div>
                                 ` : `
                                     <img src="${card.imageUrl}" onerror="this.src='https://placehold.co/180x130?text=No+Image'">
-                                    <h4>${card.name}</h4>
+                                    <h4>${escapeHtml(card.name)}</h4>
                                     <div class="result-icon ${card.isCorrect ? 'correct' : 'incorrect'}">
                                         <i class="fas ${card.isCorrect ? 'fa-check-circle' : 'fa-times-circle'}"></i>
                                     </div>
@@ -810,75 +1006,109 @@
                 `;
             }).join('');
         }
-
+        
         function handleCardClick(index) {
             const card = currentGameCards[index];
             if (card.isAnswered || isFlipping || card.isFlipping) return;
+            
             isFlipping = true;
             card.isFlipping = true;
+            
             const wrapper = document.querySelector(`.card-wrapper[data-index="${index}"]`);
             if (wrapper) wrapper.classList.add('flipping');
+            
             card.isFlipped = true;
+            
             setTimeout(() => {
                 card.isFlipping = false;
                 if (wrapper) wrapper.classList.remove('flipping');
                 isFlipping = false;
                 displayCardsGame();
+                
                 // Giữ lại class dealt cho các lá
                 if (hasDealt) {
                     document.querySelectorAll('#cards-container .card-wrapper').forEach(w => w.classList.add('dealt'));
                 }
+                
                 // Mở modal hỏi đáp
                 openModalForCard(card, index);
             }, 800);
         }
-
+        
         function openModalForCard(card, index) {
             currentModalCard = card;
             currentModalIndex = index;
             const modal = document.getElementById('card-modal');
-            document.getElementById('modal-image').src = card.imageUrl;
-            document.getElementById('modal-answer').value = '';
+            const modalImage = document.getElementById('modal-image');
+            const modalAnswer = document.getElementById('modal-answer');
+            
+            modalImage.src = card.imageUrl;
+            modalAnswer.value = '';
             modal.classList.add('active');
-            document.getElementById('modal-answer').focus();
+            modalAnswer.focus();
         }
-
+        
         function handleModalKeyPress(e) {
             if (e.key === 'Enter') submitModalAnswer();
         }
-
+        
         function submitModalAnswer() {
-            const answer = document.getElementById('modal-answer').value.trim().toLowerCase();
+            const answerInput = document.getElementById('modal-answer');
+            const answer = answerInput.value.trim().toLowerCase();
+            
             if (!answer || !currentModalCard) return;
+            
             const isCorrect = answer === currentModalCard.name.toLowerCase();
             currentModalCard.isAnswered = true;
             currentModalCard.isCorrect = isCorrect;
+            
             if (isCorrect) score++;
+            
             document.getElementById('card-modal').classList.remove('active');
             displayCardsGame();
+            
             if (hasDealt) {
                 setTimeout(() => {
                     document.querySelectorAll('#cards-container .card-wrapper').forEach(w => w.classList.add('dealt'));
                 }, 30);
             }
+            
             checkGameComplete();
         }
-
+        
         function checkGameComplete() {
             if (currentGameCards.length > 0 && currentGameCards.every(card => card.isAnswered)) {
                 const percent = Math.round((score / totalCards) * 10);
-                document.getElementById('score-display').textContent = percent;
-                let msg = percent >= 8 ? 'Xuất sắc! Bạn rất am hiểu lịch sử!' : (percent >= 5 ? 'Tốt! Hãy học thêm nhé!' : 'Cố gắng hơn nữa!');
-                document.getElementById('score-message').innerHTML = `${msg}<br>(${score}/${totalCards} đúng)`;
+                const scoreDisplay = document.getElementById('score-display');
+                const scoreMessage = document.getElementById('score-message');
+                
+                scoreDisplay.textContent = percent;
+                
+                let msg = '';
+                if (percent >= 8) {
+                    msg = 'Xuất sắc! Bạn rất am hiểu lịch sử!';
+                } else if (percent >= 5) {
+                    msg = 'Tốt! Hãy học thêm nhé!';
+                } else {
+                    msg = 'Cố gắng hơn nữa!';
+                }
+                
+                scoreMessage.innerHTML = `${msg}<br>(${score}/${totalCards} đúng)`;
                 document.getElementById('score-modal').classList.add('active');
             }
         }
-
+        
         function closeScoreModal() {
             document.getElementById('score-modal').classList.remove('active');
         }
-
-        displayFlashCards();
+        
+        // ==================== KHỞI TẠO ỨNG DỤNG ====================
+        async function initApp() {
+            await loadFlashcardsFromFirestore();
+        }
+        
+        // Khởi động ứng dụng
+        initApp();
     </script>
 </body>
 </html>
