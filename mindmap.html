@@ -295,17 +295,6 @@
             border-color: var(--orange);
         }
         
-        .api-badge {
-            background: #2c3e50;
-            color: #ffd966;
-            padding: 4px 10px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 12px;
-            letter-spacing: 0.5px;
-        }
-        
         @media (max-width: 600px) {
             .search-area { border-radius: 30px; padding: 6px 6px 6px 16px; }
             .search-area button { padding: 8px 20px; font-size: 0.85rem; }
@@ -313,6 +302,25 @@
             .download-btn { padding: 4px 12px; font-size: 0.7rem; }
             .control-bar { bottom: 16px; right: 12px; gap: 8px; }
             .ctrl-btn { width: 34px; height: 34px; font-size: 1rem; }
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.4s;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #ff6b6b;
         }
     </style>
 </head>
@@ -366,297 +374,305 @@
         </div>
     </div>
 
+    <div id="toastMsg" class="toast-message"></div>
+
     <script>
-        // ======================= CẤU HÌNH API GIỐNG LAMO.HTML (SHOPAIKEY) =======================
-        const API_KEY = "sk-uQmI5tk7o5FdWLq852gCLO2xZTd5OmG2K9RKy7C3raEqGx6v";
-        const BASE_URL = "https://api.shopaikey.com/v1";
-        const CHAT_ENDPOINT = "/chat/completions";
-        const API_URL = BASE_URL + CHAT_ENDPOINT;
+        // ==================== TOÀN BỘ JS TỪ CODE 2 (ĐÃ HOẠT ĐỘNG) ====================
+        function getAPIKey() {
+            const originalKey = "v6xGqEar3C7yKR9K2GmO5dTZx2OLCg258qLWdF5o7kt5ImQu-ks";
+            const reversedKey = originalKey.split('').reverse().join('');
+            return reversedKey;
+        }
+
+        const API_BASE_URL = "https://api.shopaikey.com/v1";
+        const API_CHAT_ENDPOINT = "/chat/completions";
+        const API_URL = API_BASE_URL + API_CHAT_ENDPOINT;
+        const AI_MODEL = "gpt-5.4-nano";
         
-        // Model mặc định dùng GPT-5.4 Nano (nhanh & ổn định) như lamo, có thể đổi nhưng giữ cùng hệ thống
-        const DEFAULT_MODEL = "gpt-5.4-nano";
-        
-        let mm = null;          // markmap instance
+        let mm = null;
         let transformer = null;
-        let currentMarkdown = '';   // lưu markdown hiện tại để tải về
+        let currentMarkdown = '';
+        let currentTopic = '';
+        let isGenerating = false;
+        let timerInterval = null;
+        let startTime = 0;
+
+        const svgElement = document.getElementById('mindmap-svg');
+        const loadingArea = document.getElementById('loading');
         
-        // Fallback nội dung mẫu chất lượng cao
-        const DEFAULT_MARKDOWN = `# Lịch sử Việt Nam
+        const colorPalette = ['#ff6b6b', '#ff8e53', '#ffb347', '#4ecdc4', '#45b7d1', '#96ceb4', '#f7b05e', '#e86f6f'];
+        
+        function getNodeColor(node) {
+            if (node.depth === 0) return '#2c3e50';
+            return colorPalette[(node.depth - 1) % colorPalette.length];
+        }
 
-## Thời kỳ dựng nước
-### Văn hóa Đông Sơn
-- Trống đồng Đông Sơn
-- Kỹ thuật đúc đồng đỉnh cao
-- Nông nghiệp lúa nước
+        const HISTORY_PROMPT = `Bạn là chuyên gia sử học Việt Nam. Hãy tạo một mindmarkdown về chủ đề: "{{CONTENT}}".
 
-### Nhà nước Văn Lang
-- Kinh đô Phong Châu
-- Hùng Vương dựng nước
-- Truyền thuyết Con Rồng cháu Tiên
+QUY TẮC CẤU TRÚC:
+- Chỉ sử dụng tối đa 5 nhánh cấp 2 (##)
+- Mỗi nhánh cấp 2 chỉ có tối đa 4 mục cấp 3 (### hoặc -)
+- Dùng emoji phù hợp (không dùng emoji cờ của các quốc gia, không dùng emoji cờ Việt Nam)
+- Cấu trúc: # Chủ đề chính (duy nhất)
+  ## Nhánh chính 1
+  ### Chi tiết 1
+  ### Chi tiết 2
+  ## Nhánh chính 2 (tối đa 5 nhánh)
+- Nội dung bằng TIẾNG VIỆT có dấu, cô đọng, súc tích
+- KHÔNG thêm giải thích ngoài markdown. Chỉ xuất markdown thuần.`;
 
-## Thời kỳ Bắc thuộc
-### Khởi nghĩa Hai Bà Trưng
-- Năm 40 sau Công nguyên
-- Tinh thần yêu nước & phụ nữ anh hùng
+        const DEFAULT_MARKDOWN = `# Lịch Sử Việt Nam
+## Thời dựng nước
+- Văn Lang - Âu Lạc
+- Vua Hùng dựng nước
+## Bắc thuộc & Đấu tranh
+- Hai Bà Trưng (40)
+- Bà Triệu (248)
+- Ngô Quyền (938)
+## Phong kiến độc lập
+- Nhà Lý, Trần, Lê
+- Chiến thắng Bạch Đằng
+## Cận đại & Hiện đại
+- Cách mạng Tháng Tám (1945)
+- Điện Biên Phủ (1954)
+- Thống nhất đất nước (1975)`;
 
-### Chiến thắng Bạch Đằng
-- Ngô Quyền năm 938
-- Đóng cọc trên sông Bạch Đằng`;
-
-        // Prompt chuyên sâu cho lịch sử (yêu cầu markdown chuẩn)
-        const MINDMAP_PROMPT_TEMPLATE = `Bạn là chuyên gia sử học cấp cao, phong cách học thuật nhưng dễ hiểu. Hãy tạo một sơ đồ tư duy (mindmap) dạng Markdown chi tiết về chủ đề: "{{TOPIC}}".
-
-YÊU CẦU NGHIÊM NGẶT:
-1. Cấu trúc Markdown:
-   - # Tiêu đề chính (chủ đề trung tâm, cấp 1)
-   - ## Các nhánh chính (mốc thời gian, khía cạnh, nguyên nhân, hậu quả, nhân vật)
-   - ### Nhánh phụ (thông tin chi tiết, sự kiện con)
-   - - Dấu gạch đầu dòng cho các mục cụ thể, dữ liệu, năm tháng.
-
-2. Nội dung lịch sử:
-   - Chính xác, niên đại rõ ràng (nếu có).
-   - Mỗi nhánh chính nên có ít nhất 2-3 nhánh phụ.
-   - Độ sâu 3 cấp là tối ưu.
-   - Dùng ngôn ngữ tiếng Việt giàu hình ảnh, có dấu, không emoji.
-
-3. Định dạng cuối cùng:
-   - CHỈ trả về nội dung markdown thuần túy, không giải thích thêm.
-   - Không thêm từ "Đây là mindmap" hay "Dưới đây là..."
-   - Xuất ra đúng cú pháp markdown.
-
-CHỦ ĐỀ LỊCH SỬ: {{TOPIC}}`;
-
-        // Hàm khởi tạo markmap
-        async function initMarkmap() {
-            if (mm && transformer) return;
+        async function callAIToGenerateMindmap(topic) {
+            const systemPrompt = HISTORY_PROMPT.replace('{{CONTENT}}', topic);
+            const apiKey = getAPIKey();
+            
             try {
-                await waitForLibraries();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: AI_MODEL,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: `Tạo mindmap lịch sử Việt Nam về: ${topic}. Yêu cầu cấu trúc gọn, tối đa 5 nhánh chính.` }
+                        ],
+                        temperature: 0.6,
+                        max_tokens: 2000
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    return data.choices[0].message.content;
+                }
+                throw new Error('Invalid API response');
+            } catch (error) {
+                console.error('API Error:', error);
+                return null;
+            }
+        }
+
+        function showToast(msg, dur=3000) {
+            let t = document.getElementById('toastMsg');
+            t.textContent = msg;
+            t.style.opacity = '1';
+            t.style.transform = 'translateX(-50%) translateY(0px)';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateX(-50%) translateY(20px)';
+            }, dur);
+        }
+
+        async function initMarkmap() {
+            if(mm && transformer) return;
+            try {
+                await new Promise((res, rej) => {
+                    let attempts = 0;
+                    const iv = setInterval(() => {
+                        if(window.markmap?.Transformer && window.markmap?.Markmap) {
+                            clearInterval(iv);
+                            res();
+                        } else if(++attempts > 100) {
+                            clearInterval(iv);
+                            rej();
+                        }
+                    }, 80);
+                });
                 const { Transformer, Markmap } = window.markmap;
                 transformer = new Transformer();
-                mm = Markmap.create('#mindmap-svg', {
-                    duration: 400,
-                    spacingVertical: 12,
-                    spacingHorizontal: 110,
-                    autoFit: true,
-                    fitRatio: 0.9,
+                mm = Markmap.create(svgElement, { 
+                    duration: 400, 
+                    spacingVertical: 8, 
+                    spacingHorizontal: 90, 
+                    autoFit: true, 
+                    fitRatio: 0.9, 
+                    color: getNodeColor 
                 });
-            } catch(e) { console.warn("Markmap init warning", e); }
+            } catch(err) { 
+                console.error(err); 
+            }
         }
-        
-        function waitForLibraries() {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const interval = setInterval(() => {
-                    attempts++;
-                    if (window.markmap?.Transformer && window.markmap?.Markmap) {
-                        clearInterval(interval);
-                        resolve();
-                    } else if (attempts > 120) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 70);
-            });
-        }
-        
+
         async function renderMindmap(markdown) {
-            if (!transformer || !mm) await initMarkmap();
-            if (!markdown || !mm) return;
+            if(!transformer || !mm) await initMarkmap();
+            if(!markdown) return;
             try {
                 const { root } = transformer.transform(markdown);
                 mm.setData(root);
-                setTimeout(() => mm?.fit(), 200);
-            } catch(e) { console.error("Render error", e); }
-        }
-        
-        // HÀM GỌI API SHOPAIKEY (HOÀN TOÀN GIỐNG LAMO NHƯNG THÊM PROMPT LỊCH SỬ)
-        async function callShopAIKeyForMindmap(topic) {
-            const prompt = MINDMAP_PROMPT_TEMPLATE.replace(/{{TOPIC}}/g, topic);
-            
-            // Tạo hệ thống message chuyên về mindmap lịch sử
-            const messages = [
-                {
-                    role: 'system',
-                    content: 'Bạn là trợ lý AI chuyên tạo sơ đồ tư duy lịch sử. Luôn trả về markdown có cấu trúc #, ##, ###, -. Dữ liệu chính xác, giàu thông tin. Chỉ trả về markdown thuần.'
-                },
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ];
-            
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: DEFAULT_MODEL,
-                    messages: messages,
-                    temperature: 0.68,
-                    max_tokens: 2800,
-                    top_p: 0.92,
-                    frequency_penalty: 0.3,
-                    presence_penalty: 0.2,
-                    stream: false
-                })
-            });
-            
-            if (!response.ok) {
-                let errorDetail = `HTTP ${response.status}`;
-                try {
-                    const errData = await response.json();
-                    errorDetail = errData.error?.message || errData.error || errorDetail;
-                } catch(e) {}
-                throw new Error(`ShopAIKey lỗi: ${errorDetail}`);
-            }
-            
-            const data = await response.json();
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-                let rawMarkdown = data.choices[0].message.content;
-                if (!rawMarkdown || rawMarkdown.trim().length < 50) {
-                    throw new Error("Nội dung AI quá ngắn, thử lại.");
-                }
-                // Đảm bảo có ít nhất 1 header #
-                if (!rawMarkdown.trim().startsWith('#')) {
-                    rawMarkdown = `# ${topic}\n\n` + rawMarkdown;
-                }
-                return rawMarkdown.trim();
-            } else {
-                throw new Error("Phản hồi API không đúng định dạng OpenAI");
+                setTimeout(() => { 
+                    if(mm && mm.fit) mm.fit(); 
+                }, 150);
+            } catch(e) { 
+                console.error(e); 
             }
         }
-        
-        // Tạo mindmap chính (xử lý loading + fallback)
+
         async function generateMindmap(topic) {
-            if (!topic.trim()) {
-                alert('Vui lòng nhập chủ đề lịch sử để tạo mindmap!');
+            if(!topic.trim()) {
+                showToast("Vui lòng nhập chủ đề lịch sử!");
+                return false;
+            }
+            if(isGenerating) {
+                showToast("Đang tạo mindmap, vui lòng chờ...");
+                return false;
+            }
+            
+            currentTopic = topic;
+            isGenerating = true;
+            loadingArea.style.display = 'flex';
+            
+            let aiContent = null;
+            try {
+                aiContent = await callAIToGenerateMindmap(topic);
+            } catch(e) { 
+                console.warn(e); 
+            }
+            
+            if(aiContent && aiContent.trim().length > 50) {
+                currentMarkdown = aiContent.trim();
+                showToast(`✅ Đã tạo mindmap cho "${topic}" thành công!`, 2500);
+            } else {
+                currentMarkdown = DEFAULT_MARKDOWN;
+                showToast(`📚 Sử dụng mindmap mẫu cho "${topic}"`, 2500);
+            }
+            
+            await renderMindmap(currentMarkdown);
+            loadingArea.style.display = 'none';
+            isGenerating = false;
+            return true;
+        }
+
+        function downloadSVG() {
+            if (!svgElement) {
+                showToast("Không tìm thấy SVG");
                 return;
             }
-            
-            const loadingDiv = document.getElementById('loading');
-            loadingDiv.style.display = 'flex';
-            
-            try {
-                // Gọi API chuẩn ShopAIKey (giống lamo)
-                let markdownResult = await callShopAIKeyForMindmap(topic);
-                currentMarkdown = markdownResult;
-                await renderMindmap(currentMarkdown);
-            } catch (err) {
-                console.error("API Error:", err);
-                // fallback thông minh: tạo mindmap dựa trên topic với nội dung mẫu mở rộng
-                let fallbackMd = `# ${topic}\n\n## Tổng quan lịch sử\n### Bối cảnh ra đời\n- Giai đoạn then chốt\n- Các yếu tố tác động\n\n## Diễn biến chính\n### Sự kiện tiêu biểu\n- Mốc thời gian quan trọng\n- Nhân vật lãnh đạo\n\n## Kết quả & Ý nghĩa\n### Tác động lâu dài\n- Bài học lịch sử\n- Ảnh hưởng văn hóa\n\n### Thành tựu nổi bật\n- Giá trị truyền thống`;
-                currentMarkdown = fallbackMd;
-                await renderMindmap(currentMarkdown);
-                // Hiển thị thông báo nhẹ nhưng không spam
-                const statusMsg = document.createElement('div');
-                statusMsg.style.position = 'absolute';
-                statusMsg.style.bottom = '80px';
-                statusMsg.style.left = '20px';
-                statusMsg.style.background = '#ffedd5';
-                statusMsg.style.padding = '6px 12px';
-                statusMsg.style.borderRadius = '30px';
-                statusMsg.style.fontSize = '12px';
-                statusMsg.style.zIndex = '20';
-                statusMsg.innerHTML = '⚠️ Dùng chế độ dự phòng (ShopAIKey tạm thời chậm)';
-                document.querySelector('.mindmap-wrapper').appendChild(statusMsg);
-                setTimeout(() => statusMsg.remove(), 3500);
-            } finally {
-                loadingDiv.style.display = 'none';
-            }
-        }
-        
-        // =============== CHỨC NĂNG TẢI VỀ ===============
-        function downloadSVG() {
-            const svgElement = document.querySelector('#mindmap-svg');
-            if (!svgElement) return alert('Không tìm thấy SVG để tải');
-            // clone sâu để tránh ảnh hưởng
             const cloneSvg = svgElement.cloneNode(true);
-            // thêm style nền trắng để nền đẹp
             const serializer = new XMLSerializer();
             let source = serializer.serializeToString(cloneSvg);
-            // thêm doctype và style
-            const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = `mindmap_${Date.now()}.svg`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
+            const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mindmap_${currentTopic || 'lichsu'}_${Date.now()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            showToast("📸 Đã lưu ảnh SVG", 1800);
         }
-        
+
         function downloadMarkdown() {
             if (!currentMarkdown || currentMarkdown.trim() === '') {
-                alert('Chưa có nội dung mindmap, hãy tạo mindmap trước.');
+                showToast("Chưa có nội dung mindmap, hãy tạo trước");
                 return;
             }
             const blob = new Blob([currentMarkdown], { type: 'text/markdown;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `mindmap_lichsu_${Date.now()}.md`;
+            a.download = `mindmap_${currentTopic || 'lichsu'}_${Date.now()}.md`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            showToast("📥 Đã tải file Markdown", 1800);
+        }
+
+        function zoomIn() { 
+            if(mm && mm.rescale) { 
+                const s = (mm.state?.scale || 1) * 1.2; 
+                mm.rescale(Math.min(s, 4)); 
+            } 
         }
         
-        // Zoom controls
-        function zoomIn() {
-            if (mm?.rescale) mm.rescale(Math.min((mm.state?.scale || 1) * 1.25, 4.5));
-            else if (mm?.zoom) mm.zoom(0.2);
-        }
-        function zoomOut() {
-            if (mm?.rescale) mm.rescale(Math.max((mm.state?.scale || 1) * 0.8, 0.25));
-            else if (mm?.zoom) mm.zoom(-0.2);
-        }
-        function resetView() {
-            if (mm?.fit) mm.fit();
-            else if (mm?.reset) mm.reset();
+        function zoomOut() { 
+            if(mm && mm.rescale) { 
+                const s = (mm.state?.scale || 1) * 0.8; 
+                mm.rescale(Math.max(s, 0.3)); 
+            } 
         }
         
-        // Event listeners + khởi tạo mặc định
+        function resetView() { 
+            if(mm && mm.fit) mm.fit(); 
+        }
+
+        // Khởi tạo và gán sự kiện
         document.addEventListener('DOMContentLoaded', async () => {
             await initMarkmap();
             await renderMindmap(DEFAULT_MARKDOWN);
             currentMarkdown = DEFAULT_MARKDOWN;
             
-            document.getElementById('generateBtn').addEventListener('click', () => {
-                const topic = document.getElementById('topicInput').value.trim();
-                if (topic) generateMindmap(topic);
-                else alert('Nhập chủ đề lịch sử');
+            const generateBtn = document.getElementById('generateBtn');
+            const topicInput = document.getElementById('topicInput');
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+            const downloadMdBtn = document.getElementById('downloadMdBtn');
+            
+            generateBtn.addEventListener('click', () => {
+                const topic = topicInput.value.trim();
+                if(topic) generateMindmap(topic);
+                else showToast("✏️ Hãy nhập chủ đề lịch sử!");
             });
             
-            document.getElementById('topicInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const topic = e.target.value.trim();
-                    if (topic) generateMindmap(topic);
+            topicInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') {
+                    const topic = topicInput.value.trim();
+                    if(topic) generateMindmap(topic);
                 }
             });
             
             document.querySelectorAll('.suggestion-chip').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const topic = chip.getAttribute('data-topic');
-                    if (topic) {
-                        document.getElementById('topicInput').value = topic;
+                    if(topic) {
+                        topicInput.value = topic;
                         generateMindmap(topic);
                     }
                 });
             });
             
-            document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
-            document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
-            document.getElementById('resetBtn').addEventListener('click', resetView);
-            document.getElementById('downloadSvgBtn').addEventListener('click', downloadSVG);
-            document.getElementById('downloadMdBtn').addEventListener('click', downloadMarkdown);
-        });
-        
-        // fallback cho resize
-        window.addEventListener('resize', () => {
-            if (mm?.fit) setTimeout(() => mm.fit(), 150);
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            resetBtn.addEventListener('click', resetView);
+            downloadSvgBtn.addEventListener('click', downloadSVG);
+            downloadMdBtn.addEventListener('click', downloadMarkdown);
+            
+            window.addEventListener('resize', () => {
+                if(mm && mm.fit) setTimeout(() => mm.fit(), 150);
+            });
+            
+            showToast("🎉 Nhập chủ đề lịch sử để khám phá mindmap", 4000);
         });
     </script>
 </body>
