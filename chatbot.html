@@ -170,7 +170,7 @@
             position: relative;
         }
 
-        /* THANH ĐIỀU HƯỚNG TRÊN CÙNG GIỮ LẠI (navbar) */
+        /* THANH ĐIỀU HƯỚNG TRÊN CÙNG - LOGO LÀ LINK tới index.html */
         .navbar {
             background: rgba(255, 251, 245, 0.96);
             backdrop-filter: blur(12px);
@@ -183,11 +183,13 @@
             flex-shrink: 0;
         }
 
+        /* TIÊU ĐỀ "LisuAI" GÓC TRÊN BÊN TRÁI - LÀ LINK */
         .logo {
             display: flex;
             align-items: center;
             gap: 10px;
-            text-decoration: none;
+            text-decoration: none;  /* bỏ gạch chân mặc định của thẻ a */
+            cursor: pointer;
         }
 
         .logo-mark {
@@ -454,12 +456,13 @@
 
     <!-- MAIN CHAT -->
     <div class="main-chat">
-        <!-- Thanh điều hướng trên cùng giữ nguyên bản gốc -->
+        <!-- Thanh điều hướng trên cùng: TIÊU ĐỀ "LisuAI" GÓC TRÊN BÊN TRÁI LÀ LINK index.html -->
         <div class="navbar">
-            <div class="logo">
+            <!-- THAY THẺ div LOGO THÀNH THẺ a ĐỂ DẪN ĐẾN index.html -->
+            <a href="index.html" class="logo">
                 <div class="logo-mark"><i class="fas fa-scroll"></i></div>
                 <div class="logo-type">Lisu<em>AI</em></div>
-            </div>
+            </a>
             <div class="nav-links">
                 <a href="index.html"><i class="fas fa-home"></i> Trang chủ</a>
                 <a href="flashcard.html"><i class="fas fa-layer-group"></i> Flash Card</a>
@@ -596,8 +599,6 @@
         html = html.replace(ulRegex, '<ul>$1</ul>');
         // Danh sách có thứ tự 1. item
         html = html.replace(/^\d+\.\s+(.*?)$/gm, '<li>$1</li>');
-        const olRegex = /((<li>.*<\/li>\n?)+)/g; 
-        // tránh overlap, nhưng tạm ổn: nhóm lại sau khi xử lý ul/ol? dùng tạm
         let temp = html;
         temp = temp.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
             if (match.includes('<ul')) return match;
