@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Quản lý Flashcard Lisu AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #e67e22;
+            --primary-dark: #d35400;
+            --primary-light: #f39c12;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f1c40f;
+            --info: #3498db;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #fef5e8 0%, #fff0e0 100%);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(135deg, var(--dark), #1a252f);
+            color: white;
+            z-index: 100;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header h2 i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 25px;
+            margin: 5px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 24px;
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 20px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-info h3 {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Content Panel */
+        .content-panel {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: block;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-box button {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-group select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .btn-add {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .flashcard-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-buttons button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+            color: var(--dark);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: var(--gray);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .loading-spinner i {
+            font-size: 40px;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .toolbar {
+                flex-direction: column;
+            }
+            .search-box {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p style="margin-top: 15px;">Đang xử lý...</p>
+        </div>
+    </div>
+
+    <!-- Admin Panel Content -->
+    <div id="admin-panel">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-crown"></i> Lisu Admin</h2>
+                <p>Quản lý hệ thống flashcards</p>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" data-page="flashcards">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Quản lý Flashcard</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title" id="page-title">Quản lý Flashcard</h1>
+            </div>
+
+            <!-- Flashcards Management Page (merged with dashboard) -->
+            <div id="flashcards-page" class="content-panel active">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>Tổng số flashcards</h3>
+                            <div class="stat-number" id="total-flashcards">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>Flashcard hôm nay</h3>
+                            <div class="stat-number" id="today-flashcards">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Tìm kiếm theo tên sự kiện..." onkeypress="handleSearchKeyPress(event)">
+                        <button onclick="searchFlashcards()"><i class="fas fa-search"></i> Tìm</button>
+                    </div>
+                    <div class="filter-group">
+                        <select id="sort-select" onchange="changeSort()">
+                            <option value="newest">Mới nhất</option>
+                            <option value="oldest">Cũ nhất</option>
+                            <option value="az">A-Z</option>
+                            <option value="za">Z-A</option>
+                        </select>
+                    </div>
+                    <button class="btn-add" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Thêm flashcard
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container">
+                    <table id="flashcards-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortByName()">Tên sự kiện <i class="fas fa-sort"></i></th>
+                                <th>Hình ảnh</th>
+                                <th onclick="sortByDate()">Ngày tạo <i class="fas fa-sort"></i></th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="flashcards-tbody">
+                            <tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="flashcard-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Thêm flashcard mới</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="flashcard-form" onsubmit="saveFlashcard(event)">
+                <input type="hidden" id="flashcard-id">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Tên sự kiện / Nhân vật</label>
+                    <input type="text" id="flashcard-name" required placeholder="Ví dụ: Cách mạng Tháng Tám">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> URL hình ảnh</label>
+                    <input type="url" id="flashcard-image" required placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn-save">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2GOVFjO0jIHfyF6Cm4i7ZF3e9cMI0E6o",
+            authDomain: "lisu-580b9.firebaseapp.com",
+            projectId: "lisu-580b9",
+            storageBucket: "lisu-580b9.firebasestorage.app",
+            messagingSenderId: "625966703998",
+            appId: "1:625966703998:web:385b6cc2895b46a33fbf2f",
+            measurementId: "G-5K6910GR7H"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global variables
+        let allFlashcards = [];
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let currentSort = 'newest';
+        let currentSearch = '';
+
+        // Show/Hide Loading
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+
+        // Load all data
+        async function loadAllData() {
+            await loadFlashcards();
+            await updateStats();
+        }
+
+        // Load flashcards from Firestore
+        async function loadFlashcards() {
+            showLoading();
+            try {
+                let query = db.collection('flashcards');
+                const snapshot = await query.get();
+                allFlashcards = [];
+                snapshot.forEach(doc => {
+                    allFlashcards.push({
+                        id: doc.id,
+                        name: doc.data().name,
+                        imageUrl: doc.data().imageUrl,
+                        createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
+                    });
+                });
+                
+                // Apply search filter
+                if (currentSearch) {
+                    allFlashcards = allFlashcards.filter(card => 
+                        card.name.toLowerCase().includes(currentSearch.toLowerCase())
+                    );
+                }
+                
+                // Apply sort
+                applySort();
+                
+                displayFlashcardsTable();
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading flashcards:', error);
+                hideLoading();
+                document.getElementById('flashcards-tbody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Lỗi tải dữ liệu: ' + error.message + '</td></tr>';
+            }
+        }
+
+        // Update statistics
+        async function updateStats() {
+            try {
+                const snapshot = await db.collection('flashcards').get();
+                const total = snapshot.size;
+                document.getElementById('total-flashcards').textContent = total;
+                
+                // Get today's flashcards
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                let todayCount = 0;
+                snapshot.forEach(doc => {
+                    const createdAt = doc.data().createdAt;
+                    if (createdAt && createdAt.toDate() >= today) {
+                        todayCount++;
+                    }
+                });
+                document.getElementById('today-flashcards').textContent = todayCount;
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        function applySort() {
+            switch(currentSort) {
+                case 'newest':
+                    allFlashcards.sort((a, b) => b.createdAt - a.createdAt);
+                    break;
+                case 'oldest':
+                    allFlashcards.sort((a, b) => a.createdAt - b.createdAt);
+                    break;
+                case 'az':
+                    allFlashcards.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'za':
+                    allFlashcards.sort((a, b) => b.name.localeCompare(a.name));
+                    break;
+            }
+        }
+
+        function changeSort() {
+            currentSort = document.getElementById('sort-select').value;
+            currentPage = 1;
+            applySort();
+            displayFlashcardsTable();
+        }
+
+        function sortByName() {
+            currentSort = currentSort === 'az' ? 'za' : 'az';
+            document.getElementById('sort-select').value = currentSort;
+            applySort();
+            displayFlashcardsTable();
+        }
+
+        function sortByDate() {
+            currentSort = currentSort === 'newest' ? 'oldest' : 'newest';
+            document.getElementById('sort-select').value = currentSort;
+            applySort();
+            displayFlashcardsTable();
+        }
+
+        function displayFlashcardsTable() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageFlashcards = allFlashcards.slice(start, end);
+            const tbody = document.getElementById('flashcards-tbody');
+            
+            if (pageFlashcards.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>';
+                displayPagination();
+                return;
+            }
+            
+            tbody.innerHTML = pageFlashcards.map(card => `
+                <tr>
+                    <td><strong>${escapeHtml(card.name)}</strong></td>
+                    <td><img src="${card.imageUrl}" class="flashcard-image" onerror="this.src='https://placehold.co/50x50?text=No+Image'"></td>
+                    <td>${formatDate(card.createdAt)}</td>
+                    <td class="action-buttons">
+                        <button class="btn-edit" onclick="editFlashcard('${card.id}')"><i class="fas fa-edit"></i> Sửa</button>
+                        <button class="btn-delete" onclick="deleteFlashcard('${card.id}')"><i class="fas fa-trash"></i> Xóa</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            displayPagination();
+        }
+
+        function displayPagination() {
+            const totalPages = Math.ceil(allFlashcards.length / itemsPerPage);
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+            
+            let html = '<button onclick="changePage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>&laquo; Đầu</button>';
+            html += '<button onclick="changePage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>&lsaquo; Trước</button>';
+            
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                html += '<button onclick="changePage(1)">1</button>';
+                if (startPage > 2) html += '<button disabled>...</button>';
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += '<button disabled>...</button>';
+                html += `<button onclick="changePage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            html += '<button onclick="changePage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>Sau &rsaquo;</button>';
+            html += '<button onclick="changePage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>Cuối &raquo;</button>';
+            
+            paginationDiv.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            displayFlashcardsTable();
+        }
+
+        // CRUD Operations
+        async function addFlashcard(name, imageUrl) {
+            showLoading();
+            try {
+                await db.collection('flashcards').add({
+                    name: name,
+                    imageUrl: imageUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await loadFlashcards();
+                await updateStats();
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.error('Error adding flashcard:', error);
+                hideLoading();
+                alert('Có lỗi khi thêm flashcard: ' + error.message);
+                return false;
+            }
+        }
+
+        async function updateFlashcard(id, name, imageUrl) {
+            showLoading();
+            try {
+                await db.collection('flashcards').doc(id).update({
+                    name: name,
+                    imageUrl: imageUrl
+                });
+                await loadFlashcards();
+                await updateStats();
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.error('Error updating flashcard:', error);
+                hideLoading();
+                alert('Có lỗi khi cập nhật flashcard: ' + error.message);
+                return false;
+            }
+        }
+
+        async function deleteFlashcard(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa flashcard này?')) {
+                showLoading();
+                try {
+                    await db.collection('flashcards').doc(id).delete();
+                    await loadFlashcards();
+                    await updateStats();
+                    hideLoading();
+                    alert('Đã xóa flashcard thành công!');
+                } catch (error) {
+                    console.error('Error deleting flashcard:', error);
+                    hideLoading();
+                    alert('Có lỗi khi xóa flashcard: ' + error.message);
+                }
+            }
+        }
+
+        // Modal functions
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'Thêm flashcard mới';
+            document.getElementById('flashcard-id').value = '';
+            document.getElementById('flashcard-name').value = '';
+            document.getElementById('flashcard-image').value = '';
+            document.getElementById('flashcard-modal').classList.add('active');
+        }
+
+        async function editFlashcard(id) {
+            const card = allFlashcards.find(c => c.id === id);
+            if (card) {
+                document.getElementById('modal-title').textContent = 'Sửa flashcard';
+                document.getElementById('flashcard-id').value = card.id;
+                document.getElementById('flashcard-name').value = card.name;
+                document.getElementById('flashcard-image').value = card.imageUrl;
+                document.getElementById('flashcard-modal').classList.add('active');
+            }
+        }
+
+        async function saveFlashcard(event) {
+            event.preventDefault();
+            const id = document.getElementById('flashcard-id').value;
+            const name = document.getElementById('flashcard-name').value.trim();
+            const imageUrl = document.getElementById('flashcard-image').value.trim();
+            
+            if (!name || !imageUrl) {
+                alert('Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+            
+            if (id) {
+                await updateFlashcard(id, name, imageUrl);
+            } else {
+                await addFlashcard(name, imageUrl);
+            }
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('flashcard-modal').classList.remove('active');
+        }
+
+        // Search and filter
+        function searchFlashcards() {
+            currentSearch = document.getElementById('search-input').value;
+            currentPage = 1;
+            loadFlashcards();
+        }
+
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchFlashcards();
+            }
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(date) {
+            if (!date) return 'N/A';
+            return date.toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Set up real-time listener for Firestore
+        function setupRealtimeListener() {
+            db.collection('flashcards').onSnapshot(() => {
+                console.log("Dữ liệu thay đổi, cập nhật...");
+                loadFlashcards();
+                updateStats();
+            }, (error) => {
+                console.error("Lỗi real-time listener:", error);
+            });
+        }
+
+        // Initialize
+        document.getElementById('admin-panel').style.display = 'block';
+        loadAllData();
+        setupRealtimeListener();
+    </script>
+</body>
+</html>
