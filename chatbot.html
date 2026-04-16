@@ -277,26 +277,6 @@
             font-weight: 500;
         }
 
-        .model-mini-selector {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            padding: 5px 14px;
-            border-radius: 60px;
-            border: 1px solid var(--border-soft);
-        }
-
-        .model-mini-selector select {
-            border: none;
-            background: transparent;
-            font-weight: 500;
-            font-size: 0.8rem;
-            outline: none;
-            color: var(--orange-dark);
-            cursor: pointer;
-        }
-
         .chat-title-area {
             font-size: 0.8rem;
             color: var(--text-muted);
@@ -476,7 +456,7 @@
             </button>
         </div>
 
-        <!-- Thanh công cụ bên dưới navbar -->
+        <!-- Thanh công cụ bên dưới navbar (đã loại bỏ model selector) -->
         <div class="chat-toolbar">
             <button class="toggle-sidebar-btn" id="toggleSidebarBtn">
                 <i class="fas fa-bars"></i> Ẩn/Hiện thanh bên
@@ -484,16 +464,7 @@
             <div class="chat-title-area">
                 <i class="fas fa-landmark"></i> <span id="currentConvName">Cuộc trò chuyện</span>
             </div>
-            <div class="model-mini-selector">
-                <i class="fas fa-microchip"></i>
-                <select id="modelSelect">
-                    <option value="gpt-5.4-nano">GPT-5.4 Nano (Nhanh)</option>
-                    <option value="gpt-4">GPT-4 (Mạnh mẽ)</option>
-                    <option value="gpt-4-turbo-preview">GPT-4 Turbo (Cân bằng)</option>
-                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
-                    <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
-                </select>
-            </div>
+            <!-- Đã xóa hoàn toàn phần model-mini-selector -->
         </div>
 
         <div class="chat-messages" id="chatMessages">
@@ -515,10 +486,12 @@
 </div>
 
 <script>
-    // ======================= CẤU HÌNH API GIỐNG LAMO =======================
+    // ======================= CẤU HÌNH API (Model cố định, không cho chọn) =======================
     const API_KEY = "sk-uQmI5tk7o5FdWLq852gCLO2xZTd5OmG2K9RKy7C3raEqGx6v";
     const BASE_URL = "https://api.shopaikey.com/v1";
     const API_URL = BASE_URL + "/chat/completions";
+    // Model cố định - đã loại bỏ lựa chọn của người dùng
+    const FIXED_MODEL = "gpt-5.4-nano";
     
     // ======================= QUẢN LÝ HỘI THOẠI LOCALSTORAGE =======================
     let conversations = [];
@@ -734,7 +707,7 @@
         if (conv && span) span.innerText = conv.name;
     }
     
-    // ======================= GỌI API =======================
+    // ======================= GỌI API VỚI MODEL CỐ ĐỊNH =======================
     let typingIndicator = null;
     function showTyping() {
         removeTyping();
@@ -761,7 +734,8 @@
         if (!userMsg) return;
         addMessageToCurrent('user', userMsg);
         input.value = '';
-        const model = document.getElementById('modelSelect').value;
+        // Sử dụng model cố định, không lấy từ dropdown nữa
+        const model = FIXED_MODEL;
         isSending = true;
         showTyping();
         
@@ -791,7 +765,7 @@
             addMessageToCurrent('bot', reply);
         } catch (err) {
             removeTyping();
-            addMessageToCurrent('bot', `⚠️ **Lỗi kết nối API:** ${err.message.substring(0, 140)}\n\n💡 Hãy thử model khác hoặc kiểm tra mạng.`);
+            addMessageToCurrent('bot', `⚠️ **Lỗi kết nối API:** ${err.message.substring(0, 140)}\n\n💡 Vui lòng thử lại sau.`);
         } finally {
             isSending = false;
             document.getElementById('userInput').focus();
