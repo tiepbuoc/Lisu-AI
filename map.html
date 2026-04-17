@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -620,7 +619,6 @@
             width: 100%;
         }
         
-        /* LỖI 1: XÓA text-overflow: ellipsis - không có dấu ... ở cuối */
         #search-input {
             width: 100%;
             padding: 1rem 6rem 1rem 1.5rem;
@@ -698,7 +696,6 @@
             border-radius: 1rem 1rem 0 0;
         }
         
-        /* LỖI 2: Country Info ở trên, Result Messages ở dưới */
         #countryInfoInline {
             margin-bottom: 20px;
             flex-shrink: 0;
@@ -1516,13 +1513,12 @@
             }
         }
         
-        // LỖI 3: Thêm marker với màu CAM, nằm SÁT BỀ MẶT và TRÊN biên giới
+        // Thêm marker với màu CAM, nằm SÁT BỀ MẶT và TRÊN biên giới
         function addMarkerAndZoom(lat, lng, title) {
             clearMarker();
             currentMarkerData = { lat: lat, lng: lng, title: title };
             
             if (globe && !viewToggle.checked) {
-                // Marker 3D - màu cam, altitude=0 (nằm sát bề mặt), radius nhỏ hơn
                 const markerData = [{ lat: lat, lng: lng, size: 0.35, color: '#E67E22', name: title }];
                 globe.pointsData(markerData)
                     .pointColor(() => '#E67E22')
@@ -1794,8 +1790,6 @@
             }
             
             pendingYearLoadTimer = setTimeout(async () => {
-                // LỖI 3: KHÔNG xóa marker khi tải năm mới từ thanh trượt
-                // clearMarkerForNewAction(); // ĐÃ COMMENT
                 await loadYearActual(index);
                 pendingYearLoadTimer = null;
             }, 500);
@@ -1916,7 +1910,6 @@
             const lng = coordinates.lng;
             stopSpeechForNewAction();
             
-            // LỖI 1: Xóa nội dung thanh tìm kiếm và kết quả cũ khi click vào quốc gia
             searchInput.value = '';
             clearPreviousData();
             clearMarkerForNewAction();
@@ -1981,8 +1974,6 @@ Trình bày ngắn gọn, khoảng 150-200 từ.`;
             timelineSlider.addEventListener('input', function(e) {
                 const index = Math.round((e.target.value / 100) * (availableYears.length - 1));
                 stopSpeechForNewAction();
-                // LỖI 3: KHÔNG xóa marker khi kéo thanh trượt năm
-                // clearMarkerForNewAction(); // ĐÃ COMMENT
                 const yearData = availableYears[index];
                 document.getElementById('yearDisplay').textContent = yearData.label;
                 loadYearDebounced(index);
@@ -2465,6 +2456,45 @@ Trình bày ngắn gọn, khoảng 150-200 từ.`;
             stopSpeechForNewAction();
         }
         
+        // HÀM MỚI: AI XÁC ĐỊNH LOẠI THÔNG TIN NGƯỜI DÙNG TÌM
+        async function aiIdentifyType(query) {
+            const identifyPrompt = `Bạn là AI chuyên phân loại. Hãy xác định chính xác "${query}" thuộc loại nào trong 3 loại: "battle" (trận chiến), "figure" (nhân vật lịch sử), "landmark" (địa điểm/di tích lịch sử). Nếu không thuộc 3 loại trên, trả về "general". CHỈ TRẢ VỀ MỘT TRONG 4 TỪ: battle, figure, landmark, general. Không giải thích thêm.`;
+            try {
+                const result = await callGeminiAPI(identifyPrompt);
+                const type = result.trim().toLowerCase();
+                if (type === 'battle' || type === 'figure' || type === 'landmark' || type === 'general') {
+                    return type;
+                }
+                return 'general';
+            } catch (error) {
+                console.error("Lỗi AI phân loại:", error);
+                return 'general';
+            }
+        }
+        
+        // HÀM CẮT NGẮN VĂN BẢN XUỐNG CÒN TỐI ĐA 50 KÝ TỰ CHO SƠ ĐỒ TƯ DUY
+        function truncateForMindmap(text, maxLength = 200) {
+            if (!text) return "";
+            const stringText = text.toString();
+            if (stringText.length <= maxLength) return stringText;
+            return stringText.substring(0, maxLength - 3) + "...";
+        }
+        
+        // HÀM CẮT NGẮN TOÀN BỘ NỘI DUNG MARKDOWN TRƯỚC KHI RENDER SƠ ĐỒ
+        function truncateMarkdownForMindmap(markdownContent) {
+            const lines = markdownContent.split('\n');
+            const truncatedLines = lines.map(line => {
+                if (line.startsWith('- ') || line.startsWith('  - ') || line.startsWith('    - ')) {
+                    const content = line.replace(/^(\s*-\s+)/, '');
+                    const prefix = line.substring(0, line.length - content.length);
+                    const truncatedContent = truncateForMindmap(content, 200);
+                    return prefix + truncatedContent;
+                }
+                return line;
+            });
+            return truncatedLines.join('\n');
+        }
+        
         async function handleSubmit(e) {
             if (e) {
                 e.preventDefault();
@@ -2481,42 +2511,14 @@ Trình bày ngắn gọn, khoảng 150-200 từ.`;
             showLoadingScreen();
             
             try {
+                // BƯỚC 1: AI XÁC ĐỊNH LOẠI
+                const identifiedType = await aiIdentifyType(userQuery);
+                console.log("AI xác định loại:", identifiedType, "cho câu hỏi:", userQuery);
+                
                 let prompt = "";
                 let responseType = "general";
                 
-                if (isCountryQuery(userQuery) && !isBattleQuery(userQuery) && !isFigureQuery(userQuery) && !isLandmarkQuery(userQuery)) {
-                    const countryName = extractCountryName(userQuery);
-                    if (countryName) {
-                        toggleCountry(countryName);
-                        hideLoadingScreen();
-                        return;
-                    }
-                } else if (isFigureQuery(userQuery)) {
-                    responseType = "figure";
-                    prompt = `
-RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCLUDE ANY EXTRA TEXT, EXPLANATION, COMMENTARY, PREFIX, SUFFIX, OR FORMATTING OUTSIDE OF THE JSON STRUCTURE. ANY DEVIATION IS STRICTLY FORBIDDEN. Provide comprehensive information about the historical figure "${userQuery}" in ${currentLanguage === 'vi' ? 'Vietnamese' : 'English'}.
-
-IMPORTANT: All text fields MUST be in ${currentLanguage === 'vi' ? 'Vietnamese' : 'English'}.
-
-JSON structure:
-{
-    "name": "Full name of the figure",
-    "time": "Lifespan (year of birth - year of death) - MUST HAVE SPECIFIC YEAR (eg: 1010-1080)",
-    "location": "Specific birthplace or main location associated",
-    "lat": latitude number,
-    "lng": longitude number,
-    "biography": "Detailed biography covering their life story, key events, and historical context",
-    "family": ["List of family members (parents, spouse, children) with brief descriptions"],
-    "education": ["List of educational background, teachers, training"],
-    "career": ["List of major career milestones, positions held, roles"],
-    "achievements": ["List of notable achievements and contributions"],
-    "quotes": ["List of famous quotes or sayings"],
-    "legacy": "Description of their lasting legacy and influence",
-    "yearValue": SPECIFIC YEAR (from birth or death year, eg: 1010),
-    "isBC": true/false
-}
-`;
-                } else if (isBattleQuery(userQuery)) {
+                if (identifiedType === "battle") {
                     responseType = "battle";
                     prompt = `
 RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCLUDE ANY EXTRA TEXT, EXPLANATION, COMMENTARY, PREFIX, SUFFIX, OR FORMATTING OUTSIDE OF THE JSON STRUCTURE. ANY DEVIATION IS STRICTLY FORBIDDEN. Provide detailed information about the historical battle "${userQuery}" in ${currentLanguage === 'vi' ? 'Vietnamese' : 'English'}. JSON must have structure:
@@ -2541,7 +2543,32 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
     "isBC": true/false
 }
                     `;
-                } else if (isLandmarkQuery(userQuery)) {
+                } else if (identifiedType === "figure") {
+                    responseType = "figure";
+                    prompt = `
+RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCLUDE ANY EXTRA TEXT, EXPLANATION, COMMENTARY, PREFIX, SUFFIX, OR FORMATTING OUTSIDE OF THE JSON STRUCTURE. ANY DEVIATION IS STRICTLY FORBIDDEN. Provide comprehensive information about the historical figure "${userQuery}" in ${currentLanguage === 'vi' ? 'Vietnamese' : 'English'}.
+
+IMPORTANT: All text fields MUST be in ${currentLanguage === 'vi' ? 'Vietnamese' : 'English'}.
+
+JSON structure:
+{
+    "name": "Full name of the figure",
+    "time": "Lifespan (year of birth - year of death) - MUST HAVE SPECIFIC YEAR (eg: 1010-1080)",
+    "location": "Specific birthplace or main location associated",
+    "lat": latitude number,
+    "lng": longitude number,
+    "biography": "Detailed biography covering their life story, key events, and historical context",
+    "family": ["List of family members (parents, spouse, children) with brief descriptions"],
+    "education": ["List of educational background, teachers, training"],
+    "career": ["List of major career milestones, positions held, roles"],
+    "achievements": ["List of notable achievements and contributions"],
+    "quotes": ["List of famous quotes or sayings"],
+    "legacy": "Description of their lasting legacy and influence",
+    "yearValue": SPECIFIC YEAR (from birth or death year, eg: 1010),
+    "isBC": true/false
+}
+`;
+                } else if (identifiedType === "landmark") {
                     responseType = "landmark";
                     prompt = `
 RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCLUDE ANY EXTRA TEXT, EXPLANATION, COMMENTARY, PREFIX, SUFFIX, OR FORMATTING OUTSIDE OF THE JSON STRUCTURE. ANY DEVIATION IS STRICTLY FORBIDDEN. Provide information about the historical landmark "${userQuery}" in ${currentLanguage === 'vi' ? 'Vietnamese' : 'English'}. JSON must have structure:
@@ -2561,103 +2588,109 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
 }
                     `;
                 } else {
-                    throw new Error(translations[currentLanguage].non_history_error);
+                    // general: AI trả lời bình thường, không theo cấu trúc
+                    const generalPrompt = `Hãy trả lời câu hỏi sau bằng ${currentLanguage === 'vi' ? 'Tiếng Việt' : 'English'} một cách tự nhiên, thông tin chính xác, không cần theo cấu trúc đặc biệt: "${userQuery}"`;
+                    const botReply = await callGeminiAPI(generalPrompt);
+                    addMessageToUI("assistant", botReply);
+                    hideLoadingScreen();
+                    scrollToTop();
+                    return;
                 }
                 
+                // Nếu là battle/figure/landmark -> xử lý theo cấu trúc
                 const botReply = await callGeminiAPI(prompt);
                 console.log("Phản hồi từ Gemini:", botReply);
                 
-                if (responseType === "landmark" || responseType === "figure" || responseType === "battle") {
-                    try {
-                        let jsonStr = botReply;
-                        if (jsonStr.includes('```json')) {
-                            jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
-                        } else if (jsonStr.includes('```')) {
-                            jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
-                        }
-                        
-                        let parsedData;
-                        try {
-                            parsedData = JSON.parse(jsonStr);
-                        } catch (e) {
-                            jsonStr = jsonStr.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
-                            jsonStr = jsonStr.replace(/'/g, '"');
-                            jsonStr = jsonStr.replace(/,\s*}/g, '}');
-                            jsonStr = jsonStr.replace(/,\s*]/g, ']');
-                            parsedData = JSON.parse(jsonStr);
-                        }
-                        
-                        const resultContainer = createResultContainer(parsedData.name || userQuery);
-                        
-                        const imageUrl = await getWikipediaImage(parsedData.name || userQuery);
-                        if (imageUrl) {
-                            const imageContainer = createImageContainer(parsedData.name || userQuery, imageUrl);
-                            resultContainer.querySelector('.result-content').appendChild(imageContainer);
-                        }
-                        
-                        const infoDiv = document.createElement('div');
-                        infoDiv.className = 'info-panel-content';
-                        
-                        if (responseType === "battle") {
-                            infoDiv.innerHTML = formatBattleWithYellowDots(parsedData);
-                        } else if (responseType === "figure") {
-                            infoDiv.innerHTML = formatFigureWithYellowDots(parsedData);
-                        } else {
-                            infoDiv.innerHTML = formatLandmarkWithYellowDots(parsedData);
-                        }
-                        
-                        resultContainer.querySelector('.result-content').appendChild(infoDiv);
-                        resultMessages.appendChild(resultContainer);
-                        
-                        if (parsedData.lat && parsedData.lng) {
-                            addMarkerAndZoom(parsedData.lat, parsedData.lng, parsedData.name);
-                        } else if (parsedData.location) {
-                            const location = await getLocationCoordinates(parsedData.location);
-                            if (location && location.lat && location.lng) {
-                                addMarkerAndZoom(location.lat, location.lng, parsedData.name);
-                            }
-                        }
-                        
-                        if (parsedData.yearValue && !isNaN(parsedData.yearValue)) {
-                            let targetYear = parsedData.yearValue;
-                            if (parsedData.isBC === true) {
-                                targetYear = -Math.abs(targetYear);
-                            }
-                            const targetIndex = findYearIndexByTargetYear(targetYear);
-                            if (targetIndex !== -1 && targetIndex !== currentYearIndex) {
-                                console.log(`Tìm thấy năm ${targetYear} (${parsedData.isBC ? 'TCN' : 'CN'}), chuyển đến năm LỚN HƠN gần nhất: ${availableYears[targetIndex].label}`);
-                                setTimeout(function() {
-                                    loadYearDebounced(targetIndex);
-                                }, 500);
-                            }
-                        }
-                        
-                        const mindmapDiv = createMindmapContainerSieuNgau(parsedData.name || userQuery, 
-                            responseType === "battle" ? translations[currentLanguage].mindmap_title : 
-                            (responseType === "figure" ? translations[currentLanguage].figure_mindmap_title : translations[currentLanguage].landmark_mindmap_title));
-                        resultContainer.querySelector('.result-content').appendChild(mindmapDiv);
-                        
-                        let markdownContent = "";
-                        if (responseType === "battle") {
-                            markdownContent = generateBattleMarkdown(parsedData);
-                        } else if (responseType === "figure") {
-                            markdownContent = generateFigureMarkdown(parsedData);
-                        } else {
-                            markdownContent = generateLandmarkMarkdown(parsedData);
-                        }
-                        
-                        await renderMarkmap(mindmapDiv, markdownContent, userQuery);
-                        enhanceMindmapWithSaveButton(mindmapDiv, userQuery);
-                        
-                        const narrationText = generateNarrationText(parsedData);
-                        const audioControls = createAudioControls(narrationText, parsedData.name || userQuery);
-                        resultContainer.querySelector('.result-content').appendChild(audioControls);
-                        
-                    } catch (e) {
-                        console.error("Lỗi phân tích JSON:", e);
-                        addMessageToUI("assistant", botReply);
+                try {
+                    let jsonStr = botReply;
+                    if (jsonStr.includes('```json')) {
+                        jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
+                    } else if (jsonStr.includes('```')) {
+                        jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
                     }
-                } else {
+                    
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(jsonStr);
+                    } catch (e) {
+                        jsonStr = jsonStr.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
+                        jsonStr = jsonStr.replace(/'/g, '"');
+                        jsonStr = jsonStr.replace(/,\s*}/g, '}');
+                        jsonStr = jsonStr.replace(/,\s*]/g, ']');
+                        parsedData = JSON.parse(jsonStr);
+                    }
+                    
+                    const resultContainer = createResultContainer(parsedData.name || userQuery);
+                    
+                    const imageUrl = await getWikipediaImage(parsedData.name || userQuery);
+                    if (imageUrl) {
+                        const imageContainer = createImageContainer(parsedData.name || userQuery, imageUrl);
+                        resultContainer.querySelector('.result-content').appendChild(imageContainer);
+                    }
+                    
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'info-panel-content';
+                    
+                    if (responseType === "battle") {
+                        infoDiv.innerHTML = formatBattleWithYellowDots(parsedData);
+                    } else if (responseType === "figure") {
+                        infoDiv.innerHTML = formatFigureWithYellowDots(parsedData);
+                    } else {
+                        infoDiv.innerHTML = formatLandmarkWithYellowDots(parsedData);
+                    }
+                    
+                    resultContainer.querySelector('.result-content').appendChild(infoDiv);
+                    resultMessages.appendChild(resultContainer);
+                    
+                    if (parsedData.lat && parsedData.lng) {
+                        addMarkerAndZoom(parsedData.lat, parsedData.lng, parsedData.name);
+                    } else if (parsedData.location) {
+                        const location = await getLocationCoordinates(parsedData.location);
+                        if (location && location.lat && location.lng) {
+                            addMarkerAndZoom(location.lat, location.lng, parsedData.name);
+                        }
+                    }
+                    
+                    if (parsedData.yearValue && !isNaN(parsedData.yearValue)) {
+                        let targetYear = parsedData.yearValue;
+                        if (parsedData.isBC === true) {
+                            targetYear = -Math.abs(targetYear);
+                        }
+                        const targetIndex = findYearIndexByTargetYear(targetYear);
+                        if (targetIndex !== -1 && targetIndex !== currentYearIndex) {
+                            console.log(`Tìm thấy năm ${targetYear} (${parsedData.isBC ? 'TCN' : 'CN'}), chuyển đến năm LỚN HƠN gần nhất: ${availableYears[targetIndex].label}`);
+                            setTimeout(function() {
+                                loadYearDebounced(targetIndex);
+                            }, 500);
+                        }
+                    }
+                    
+                    const mindmapDiv = createMindmapContainerSieuNgau(parsedData.name || userQuery, 
+                        responseType === "battle" ? translations[currentLanguage].mindmap_title : 
+                        (responseType === "figure" ? translations[currentLanguage].figure_mindmap_title : translations[currentLanguage].landmark_mindmap_title));
+                    resultContainer.querySelector('.result-content').appendChild(mindmapDiv);
+                    
+                    let markdownContent = "";
+                    if (responseType === "battle") {
+                        markdownContent = generateBattleMarkdown(parsedData);
+                    } else if (responseType === "figure") {
+                        markdownContent = generateFigureMarkdown(parsedData);
+                    } else {
+                        markdownContent = generateLandmarkMarkdown(parsedData);
+                    }
+                    
+                    // ÁP DỤNG GIỚI HẠN 50 KÝ TỰ CHO MỖI NHÁNH TRONG SƠ ĐỒ
+                    const truncatedMarkdown = truncateMarkdownForMindmap(markdownContent);
+                    
+                    await renderMarkmap(mindmapDiv, truncatedMarkdown, userQuery);
+                    enhanceMindmapWithSaveButton(mindmapDiv, userQuery);
+                    
+                    const narrationText = generateNarrationText(parsedData);
+                    const audioControls = createAudioControls(narrationText, parsedData.name || userQuery);
+                    resultContainer.querySelector('.result-content').appendChild(audioControls);
+                    
+                } catch (e) {
+                    console.error("Lỗi phân tích JSON:", e);
                     addMessageToUI("assistant", botReply);
                 }
             } catch (error) {
@@ -3071,6 +3104,9 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
             return mindmapDiv;
         }
         
+        // CÁC HÀM generateBattleMarkdown, generateFigureMarkdown, generateLandmarkMarkdown vẫn giữ nguyên nội dung
+        // nhưng sẽ bị truncate trước khi render, nên các phần text dài sẽ tự động bị cắt xuống 50 ký tự
+        
         function generateBattleMarkdown(battleData) {
             function safeText(text) {
                 if (!text) return "";
@@ -3129,7 +3165,7 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
                     const faction = battleData.factions[i];
                     markdown += '- ' + safeText(faction) + '\n';
                     if (battleData.commanders && battleData.commanders[faction]) {
-                        markdown += ' - 👑 ' + safeText(battleData.commanders[faction]) + '\n';
+                        markdown += '  - 👑 ' + safeText(battleData.commanders[faction]) + '\n';
                     }
                 }
             }
@@ -3141,10 +3177,7 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
             
             if (battleData.significance) {
                 markdown += '\n## 🌟 ' + translations[currentLanguage].battle_significance + '\n';
-                const shortSignificance = battleData.significance.length > 150 ?
-                    battleData.significance.substring(0, 150) + "..." :
-                    battleData.significance;
-                markdown += '- ' + safeText(shortSignificance) + '\n';
+                markdown += '- ' + safeText(battleData.significance) + '\n';
             }
             
             return markdown;
@@ -3173,10 +3206,7 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
             
             if (figureData.biography) {
                 markdown += '\n## 📖 ' + translations[currentLanguage].biography + '\n';
-                const shortBio = figureData.biography.length > 200 ?
-                    figureData.biography.substring(0, 200) + "..." :
-                    figureData.biography;
-                markdown += '- ' + safeText(shortBio) + '\n';
+                markdown += '- ' + safeText(figureData.biography) + '\n';
             } else if (figureData.summary) {
                 markdown += '\n## 📝 ' + translations[currentLanguage].battle_summary + '\n';
                 markdown += '- ' + safeText(figureData.summary) + '\n';
@@ -3224,16 +3254,10 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
             
             if (figureData.legacy) {
                 markdown += '\n## 🏛️ ' + translations[currentLanguage].legacy + '\n';
-                const shortLegacy = figureData.legacy.length > 150 ?
-                    figureData.legacy.substring(0, 150) + "..." :
-                    figureData.legacy;
-                markdown += '- ' + safeText(shortLegacy) + '\n';
+                markdown += '- ' + safeText(figureData.legacy) + '\n';
             } else if (figureData.significance) {
                 markdown += '\n## 🌟 ' + translations[currentLanguage].battle_significance + '\n';
-                const shortSignificance = figureData.significance.length > 150 ?
-                    figureData.significance.substring(0, 150) + "..." :
-                    figureData.significance;
-                markdown += '- ' + safeText(shortSignificance) + '\n';
+                markdown += '- ' + safeText(figureData.significance) + '\n';
             }
             
             return markdown;
@@ -3262,18 +3286,12 @@ RESPOND EXCLUSIVELY IN VALID JSON FORMAT — UNDER NO CIRCUMSTANCES MAY YOU INCL
             
             if (landmarkData.purpose) {
                 markdown += '\n## 🎯 ' + (currentLanguage === 'vi' ? 'Mục đích' : 'Purpose') + '\n';
-                const shortPurpose = landmarkData.purpose.length > 150 ?
-                    landmarkData.purpose.substring(0, 150) + "..." :
-                    landmarkData.purpose;
-                markdown += '- ' + safeText(shortPurpose) + '\n';
+                markdown += '- ' + safeText(landmarkData.purpose) + '\n';
             }
             
             if (landmarkData.architecture) {
                 markdown += '\n## 🏛️ ' + (currentLanguage === 'vi' ? 'Kiến trúc' : 'Architecture') + '\n';
-                const shortArchitecture = landmarkData.architecture.length > 150 ?
-                    landmarkData.architecture.substring(0, 150) + "..." :
-                    landmarkData.architecture;
-                markdown += '- ' + safeText(shortArchitecture) + '\n';
+                markdown += '- ' + safeText(landmarkData.architecture) + '\n';
             }
             
             if (landmarkData.dynasty) {
